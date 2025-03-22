@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Jun Yet 33521026</string>
+    <string name="title_activity_login_page">LoginPage</string>
+    <string name="title_activity_questionnaire_page">QuestionnairePage</string>
+</resources>
