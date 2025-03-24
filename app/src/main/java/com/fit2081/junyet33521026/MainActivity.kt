@@ -54,8 +54,7 @@ fun WelcomeScreen(modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
 
     Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        modifier = Modifier.fillMaxSize()
     ) {
         Column(
             modifier = modifier
