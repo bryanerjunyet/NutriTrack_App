@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -26,6 +28,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -82,9 +85,12 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     val selectedPersona = remember { mutableStateOf("") }
 
     // Time pickers
-    val biggestMealTime = remember { mutableStateOf("") }
-    val sleepTime = remember { mutableStateOf("") }
-    val wakeTime = remember { mutableStateOf("") }
+//    val biggestMealTime = remember { mutableStateOf("") }
+//    val sleepTime = remember { mutableStateOf("") }
+//    val wakeTime = remember { mutableStateOf("") }
+    val biggestMealTime = remember { mutableStateOf("00:00") }
+    val sleepTime = remember { mutableStateOf("00:00") }
+    val wakeTime = remember { mutableStateOf("00:00") }
 
     Column(
         modifier = modifier.padding(14.dp),
@@ -101,7 +107,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
 
         Text(
             text = "Tick all the food categories you can eat",
-            fontSize = 15.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Medium
         )
         FoodCheckboxes(foodCategories)
@@ -110,7 +116,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
 
         Text(
             text = "Your Persona",
-            fontSize = 15.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Medium
         )
 
@@ -120,7 +126,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
 
         Text(
             text = "Which persona best fits you?",
-            fontSize = 15.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Medium
         )
         DropdownMenu(selectedPersona)
@@ -129,24 +135,89 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
 
         Text(
             text = "Timings",
-            fontSize = 15.sp,
+            fontSize = 17.sp,
             fontWeight = FontWeight.Medium
         )
-        TimePickerField("What time of day approx. do you normally eat your biggest meal?", biggestMealTime, context)
-        TimePickerField("What time of day approx. do you go to sleep at night?", sleepTime, context)
-        TimePickerField("What time of day approx. do you wake up in the morning?", wakeTime, context)
+        Spacer(modifier = Modifier.height(10.dp))
+        TimePickerField(
+            label = "What time of day approx. do you normally eat your biggest meal?",
+            timeState = biggestMealTime
+        )
+        TimePickerField(
+            label = "What time of day approx. do you go to sleep at night?",
+            timeState = sleepTime
+        )
+        TimePickerField(
+            label = "What time of day approx. do you wake up in the morning?",
+            timeState = wakeTime
+        )
+//        TimePickerField("What time of day approx. do you normally eat your biggest meal?", biggestMealTime, context)
+//        TimePickerField("What time of day approx. do you go to sleep at night?", sleepTime, context)
+//        TimePickerField("What time of day approx. do you wake up in the morning?", wakeTime, context)
 
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
             onClick = {
-                saveDataToSharedPreferences(context, selectedFoods, selectedPersona.value, biggestMealTime.value, sleepTime.value, wakeTime.value)
+                saveDataToSharedPreferences(
+                    context,
+                    selectedFoods,
+                    selectedPersona.value,
+                    biggestMealTime.value,
+                    sleepTime.value,
+                    wakeTime.value
+                )
                 context.startActivity(Intent(context, HomePage::class.java))
             },
             colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Red),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Text(text = "Save", fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Row (
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.save_icon),
+                    contentDescription = "Save",
+                    modifier = Modifier.size(23.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(text = "Save", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+/**
+ * Checkbox for food categories using manual Rows.
+ */
+@Composable
+fun FoodCheckboxes(foodCategories: List<String>) {
+    val selectedCategories = remember { mutableStateOf(listOf<String>()) }
+
+    Row {
+        val columns = foodCategories.chunked(3)
+        columns.forEach { column ->
+            Column {
+                column.forEach { category ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = category in selectedCategories.value,
+                            onCheckedChange = { isChecked ->
+                                if (isChecked) {
+                                    selectedCategories.value += category
+                                } else {
+                                    selectedCategories.value = selectedCategories.value.filter { it != category }
+                                }
+                            }
+                        )
+                        Text(
+                            text = category,
+                            fontSize = 15.5.sp
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -168,7 +239,7 @@ fun PersonaModal(personas: Map<String, Pair<Int, String>>) {
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
-                        Text(text = persona, fontSize = 14.sp)
+                        Text(text = persona, fontSize = 16.sp)
                     }
                 }
             }
@@ -179,9 +250,19 @@ fun PersonaModal(personas: Map<String, Pair<Int, String>>) {
         val (imageID, description) = personas[selectedDialog] ?: return
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text(text = selectedDialog, textAlign = TextAlign.Center) },
+            title = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = selectedDialog,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                    },
             text = {
-                Column {
+                Column (horizontalAlignment = Alignment.CenterHorizontally) {
                     androidx.compose.foundation.Image(
                         painter = painterResource(id = imageID),
                         contentDescription = selectedDialog,
@@ -195,7 +276,7 @@ fun PersonaModal(personas: Map<String, Pair<Int, String>>) {
                 // if the user clicks on the dismiss button,
                 Button(
                     onClick = { showDialog = false },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(text = "Dismiss", fontWeight = FontWeight.Bold)
@@ -204,7 +285,6 @@ fun PersonaModal(personas: Map<String, Pair<Int, String>>) {
         )
     }
 }
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -243,66 +323,48 @@ fun DropdownMenu(selectedPersona: MutableState<String>) {
     }
 }
 
-
-/**
- * Checkbox for food categories using manual Rows.
- */
-/**
- * Checkbox for food categories using manual Rows.
- */
 @Composable
-fun FoodCheckboxes(foodCategories: List<String>) {
-    val selectedCategories = remember { mutableStateOf(listOf<String>()) }
+fun TimePickerField(label: String, timeState: MutableState<String>) {
+    val mContext = LocalContext.current
+    var showTimePicker by remember { mutableStateOf(false) }
 
-    Row {
-        val columns = foodCategories.chunked(3)
-        columns.forEach { column ->
-            Column {
-                column.forEach { category ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(
-                            checked = category in selectedCategories.value,
-                            onCheckedChange = { isChecked ->
-                                if (isChecked) {
-                                    selectedCategories.value += category
-                                } else {
-                                    selectedCategories.value = selectedCategories.value.filter { it != category }
-                                }
-                            }
-                        )
-                        Text(
-                            text = category,
-                            fontSize = 15.5.sp
-                        )
-                    }
-                }
-            }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            fontSize = 15.sp,
+            textAlign = TextAlign.Justify,
+            modifier = Modifier.weight(0.7f)
+        )
+
+        Button(
+            onClick = { showTimePicker = true },
+            colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
+            modifier = Modifier.weight(0.2f)
+        ) {
+            Text(text = timeState.value, fontSize = 14.sp, color = Color.Black)
         }
     }
-}
-
-@Composable
-fun TimePickerField(label: String, timeState: MutableState<String>, context: Context) {
     Spacer(modifier = Modifier.height(8.dp))
-    Button(
-        onClick = { showTimePicker(context, timeState) },
-        colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.DarkGray) )
-    {
-        Text(text = timeState.value.ifEmpty { label })
-    }
-}
 
-fun showTimePicker(context: Context, timeState: MutableState<String>) {
-    val calendar = Calendar.getInstance()
-    TimePickerDialog(
-        context,
-        { _, hour, minute ->
-            timeState.value = String.format("%02d:%02d", hour, minute)
-        },
-        calendar.get(Calendar.HOUR_OF_DAY),
-        calendar.get(Calendar.MINUTE),
-        false
-    ).show()
+    if (showTimePicker) {
+        val mCalendar = Calendar.getInstance()
+        val mHour = mCalendar.get(Calendar.HOUR_OF_DAY)
+        val mMinute = mCalendar.get(Calendar.MINUTE)
+
+        TimePickerDialog(
+            mContext,
+            { _, mHour: Int, mMinute: Int ->
+                timeState.value = "$mHour:$mMinute"
+            }, mHour, mMinute, false
+        ).apply {
+            show()
+            setOnDismissListener { showTimePicker = false }
+        }
+    }
 }
 
 fun saveDataToSharedPreferences(
