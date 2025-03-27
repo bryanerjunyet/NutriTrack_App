@@ -165,6 +165,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 // check if the username and password are correct
                 if (isValidUser(userInputID, phoneNumber, userAccounts)) {
                     // if correct show a toast message
+                    saveUserID(context, userInputID)
                     Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
                     context.startActivity(Intent(context, QuestionnairePage::class.java))
                 } else {
@@ -209,4 +210,11 @@ fun loadUserAccounts(context: Context, fileName: String): Map<String, String> {
 // Function to validate user login
 fun isValidUser(userID: String, phoneNumber: String, userAccounts: Map<String, String>): Boolean {
     return userAccounts[userID] == phoneNumber
+}
+
+// Function to save userID to SharedPreferences
+fun saveUserID(context: Context, userID: String) {
+    val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE).edit()
+    sharedPref.putString("userLoginID", userID)
+    sharedPref.apply()
 }

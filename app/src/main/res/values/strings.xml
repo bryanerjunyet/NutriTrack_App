@@ -3,4 +3,5 @@
     <string name="title_activity_login_page">LoginPage</string>
     <string name="title_activity_questionnaire_page">QuestionnairePage</string>
     <string name="title_activity_home_page">HomePage</string>
+    <string name="title_activity_insights_page">InsightsPage</string>
 </resources>

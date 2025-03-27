@@ -68,10 +68,14 @@ class QuestionnairePage : ComponentActivity() {
 @Composable
 fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    // Load previously saved responses
+    val sharedPref = context.getSharedPreferences("UserResponse", Context.MODE_PRIVATE)
 
     // Food selection
     val foodCategories = listOf("Fruits", "Red Meat", "Fish", "Vegetables", "Seafood", "Eggs", "Grains", "Poultry", "Nuts/Seeds")
-    val selectedFoods = remember { mutableStateListOf<String>() }
+    // Load previously selected foods
+    val savedFoods = sharedPref.getStringSet("selectedFoods", setOf()) ?: setOf()
+    val selectedFoods = remember { mutableStateListOf<String>().apply { addAll(savedFoods) } }
 
     // Persona selection
     val personaCategories = mapOf(
@@ -82,12 +86,18 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
         "Health Procrastinator" to Pair(R.drawable.health_procrastinator, "I’m contemplating healthy eating but it’s not a priority for me right now. I know the basics about what it means to be healthy, but it doesn’t seem relevant to me right now. I have taken a few steps to be healthier but I am not motivated to make it a high priority because I have too many other things going on in my life."),
         "Food Carefree" to Pair(R.drawable.food_carefree, "I’m not bothered about healthy eating. I don’t really see the point and I don’t think about it. I don’t really notice healthy eating tips or recipes and I don’t care what I eat.")
     )
-    val selectedPersona = remember { mutableStateOf("") }
+    // Load previously selected persona
+    val savedPersona = sharedPref.getString("selectedPersona", "") ?: ""
+    val selectedPersona = remember { mutableStateOf(savedPersona) }
 
+    // Load previously selected time
+    val savedMealTime = sharedPref.getString("mealTime", "00:00") ?: "00:00"
+    val savedSleepTime = sharedPref.getString("sleepTime", "00:00") ?: "00:00"
+    val savedWakeTime = sharedPref.getString("wakeTime", "00:00") ?: "00:00"
     // Time selection
-    val mealTime = remember { mutableStateOf("00:00") }
-    val sleepTime = remember { mutableStateOf("00:00") }
-    val wakeTime = remember { mutableStateOf("00:00") }
+    val mealTime = remember { mutableStateOf(savedMealTime) }
+    val sleepTime = remember { mutableStateOf(savedSleepTime) }
+    val wakeTime = remember { mutableStateOf(savedWakeTime) }
     val timeCategories = mapOf(
         "What time of day approx. do you normally eat your biggest meal?" to mealTime,
         "What time of day approx. do you go to sleep at night?" to sleepTime,
@@ -131,7 +141,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
         // Save button
         Button(
             onClick = {
-                saveData(
+                saveResponse(
                     context,
                     selectedFoods,
                     selectedPersona.value,
@@ -344,7 +354,7 @@ fun TimePickerFields(timeCategories: Map<String, MutableState<String>>) {
     }
 }
 
-fun saveData(
+fun saveResponse(
     context: Context,
     selectedFoods: List<String>,
     selectedPersona: String,
@@ -352,7 +362,8 @@ fun saveData(
     sleepTime: String,
     wakeTime: String
 ) {
-    val sharedPref = context.getSharedPreferences("FoodIntakePreferences", Context.MODE_PRIVATE).edit()
+    val sharedPref = context.getSharedPreferences("UserResponse", Context.MODE_PRIVATE)
+        .edit()
     sharedPref.putStringSet("selectedFoods", selectedFoods.toSet())
     sharedPref.putString("selectedPersona", selectedPersona)
     sharedPref.putString("mealTime", mealTime)
