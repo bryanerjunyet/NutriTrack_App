@@ -64,6 +64,7 @@ class LoginPage : ComponentActivity() {
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+
     // Load user accounts from CSV file
     val userAccounts = remember { loadUserAccounts(context, "nutritrack_users.csv") }
 
