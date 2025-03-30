@@ -88,7 +88,7 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
 
         // Category Progress Bars
         foodScores.drop(1).forEachIndexed { index, (food, score) ->
-            val fullScore = if (index <= 5) 10 else 5
+            val fullScore = if (index <= 6) 10 else 5
             InsightsBar(food, score, fullScore)
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -203,8 +203,7 @@ fun InsightsBar(category: String, score: Float, fullScore: Int) {
 
         Text(
             text = "${score.toInt()}/$fullScore",
-            modifier = Modifier.weight(0.1f),
-            style = MaterialTheme.typography.bodySmall
+            modifier = Modifier.weight(0.1f)
         )
     }
 }
@@ -226,31 +225,31 @@ fun loadUserFoodScores(context: Context, userID: String, fileName: String): List
                         if (sex == "Male") {
                             foodScores.add("Total Score" to values[3].trim().toFloat())
                             foodScores.add("Discretionary" to values[5].trim().toFloat())
-                            foodScores.add("Meat & Alternatives" to values[36].trim().toFloat())
-                            foodScores.add("Dairy & Alternatives" to values[40].trim().toFloat())
+                            foodScores.add("Meat" to values[36].trim().toFloat())
+                            foodScores.add("Dairy" to values[40].trim().toFloat())
                             foodScores.add("Sugar" to values[54].trim().toFloat())
                             foodScores.add("Sodium" to values[43].trim().toFloat())
+                            foodScores.add("Grains & Cereal" to (values[29].trim().toFloat() + values[33].trim().toFloat()))
 
                             foodScores.add("Vegetables" to values[8].trim().toFloat())
                             foodScores.add("Fruits" to values[19].trim().toFloat())
-                            foodScores.add("Grains & Cereal" to values[29].trim().toFloat())
                             foodScores.add("Alcohol" to values[46].trim().toFloat())
                             foodScores.add("Water" to values[49].trim().toFloat())
-                            foodScores.add("Saturated Fat" to values[57].trim().toFloat())
+                            foodScores.add("Saturated Fat" to (values[57].trim().toFloat() + values[60].trim().toFloat()))
                         } else {
                             foodScores.add("Total Score" to values[4].trim().toFloat())
                             foodScores.add("Discretionary" to values[6].trim().toFloat())
-                            foodScores.add("Meat & Alternatives" to values[37].trim().toFloat())
-                            foodScores.add("Dairy & Alternatives" to values[41].trim().toFloat())
+                            foodScores.add("Meat" to values[37].trim().toFloat())
+                            foodScores.add("Dairy" to values[41].trim().toFloat())
                             foodScores.add("Sugar" to values[55].trim().toFloat())
                             foodScores.add("Sodium" to values[44].trim().toFloat())
+                            foodScores.add("Grains & Cereal" to (values[30].trim().toFloat() + values[34].trim().toFloat()))
 
                             foodScores.add("Vegetables" to values[9].trim().toFloat())
                             foodScores.add("Fruits" to values[20].trim().toFloat())
-                            foodScores.add("Grains & Cereal" to values[30].trim().toFloat())
                             foodScores.add("Alcohol" to values[47].trim().toFloat())
                             foodScores.add("Water" to values[50].trim().toFloat())
-                            foodScores.add("Saturated Fat" to values[58].trim().toFloat())
+                            foodScores.add("Saturated Fat" to (values[58].trim().toFloat() + values[61].trim().toFloat()))
                         }
                     }
                 }
