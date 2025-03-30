@@ -127,7 +127,25 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
                 horizontalArrangement = Arrangement.Center
             ) {
                 Button(
-                    onClick = { /* TODO */ },
+                    onClick = {
+                        val shareIntent = Intent(Intent.ACTION_SEND)
+                        shareIntent.type = "text/plain"
+
+                        // text message with all the insights data
+                        val insightsText = StringBuilder()
+                        insightsText.append("NutriTrack Food Insights\n\n")
+                        insightsText.append("Total Food Score: ${totalScore.toInt()}/100\n\n")
+                        insightsText.append("Food Categories Score:\n")
+
+                        for ((category, score) in foodScores.drop(1)) {
+                            val fullScore = if (foodScores.indexOf(Pair(category, score)) <= 6) 10 else 5
+                            insightsText.append("- $category: ${score.toInt()}/$fullScore\n")
+                        }
+                        insightsText.append("\n\nShared from NutriTrack App")
+
+                        shareIntent.putExtra(Intent.EXTRA_TEXT, insightsText.toString())
+                        context.startActivity(Intent.createChooser(shareIntent, "Share your food insights via"))
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                     modifier = Modifier.weight(0.5f)
                 ) {
@@ -185,8 +203,8 @@ fun InsightsBar(category: String, score: Float, fullScore: Int) {
     ) {
         Text(
             text = category,
-            modifier = Modifier.weight(0.3f),
-            style = MaterialTheme.typography.bodyMedium
+            fontSize = 14.sp,
+            modifier = Modifier.weight(0.3f)
         )
 
         LinearProgressIndicator(
@@ -203,6 +221,7 @@ fun InsightsBar(category: String, score: Float, fullScore: Int) {
 
         Text(
             text = "${score.toInt()}/$fullScore",
+            fontSize = 13.sp,
             modifier = Modifier.weight(0.1f)
         )
     }

@@ -68,8 +68,12 @@ class QuestionnairePage : ComponentActivity() {
 @Composable
 fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+
+    // Load current user login ID
+    val userID = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE).getString("userLoginID", "") ?: ""
+
     // Load previously saved responses
-    val sharedPref = context.getSharedPreferences("UserResponse", Context.MODE_PRIVATE)
+    val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE)
 
     // Food selection
     val foodCategories = listOf("Fruits", "Red Meat", "Fish", "Vegetables", "Seafood", "Eggs", "Grains", "Poultry", "Nuts/Seeds")
@@ -143,6 +147,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
             onClick = {
                 saveResponse(
                     context,
+                    userID,
                     selectedFoods,
                     selectedPersona.value,
                     mealTime.value,
@@ -356,14 +361,16 @@ fun TimePickerFields(timeCategories: Map<String, MutableState<String>>) {
 
 fun saveResponse(
     context: Context,
+    userID: String,
     selectedFoods: List<String>,
     selectedPersona: String,
     mealTime: String,
     sleepTime: String,
     wakeTime: String
 ) {
-    val sharedPref = context.getSharedPreferences("UserResponse", Context.MODE_PRIVATE)
-        .edit()
+    Log.d("Debug", "Current Logged-in User ID: $userID")
+
+    val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE).edit()
     sharedPref.putStringSet("selectedFoods", selectedFoods.toSet())
     sharedPref.putString("selectedPersona", selectedPersona)
     sharedPref.putString("mealTime", mealTime)
