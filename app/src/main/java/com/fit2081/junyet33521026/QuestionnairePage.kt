@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +52,10 @@ import androidx.compose.ui.unit.sp
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import java.util.Calendar
 
+
+/**
+ * Main activity for the application.
+ */
 class QuestionnairePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,20 +70,26 @@ class QuestionnairePage : ComponentActivity() {
     }
 }
 
+
 @Composable
+/**
+ * Composable function for the UI of Food Intake Questionnaire screen.
+ *
+ * @param modifier Modifier to be applied.
+ */
 fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
+    // current context to start activity
     val context = LocalContext.current
-
-    // Load current user login ID
+    // load user accounts from CSV file
     val userID = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE).getString("userLoginID", "") ?: ""
-
-    // Load previously saved responses
+    // load any saved responses
     val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE)
 
     // Food selection
     val foodCategories = listOf("Fruits", "Red Meat", "Fish", "Vegetables", "Seafood", "Eggs", "Grains", "Poultry", "Nuts/Seeds")
-    // Load previously selected foods
+    // load any saved foods
     val savedFoods = sharedPref.getStringSet("selectedFoods", setOf()) ?: setOf()
+    // track current selected foods
     val selectedFoods = remember { mutableStateListOf<String>().apply { addAll(savedFoods) } }
 
     // Persona selection
@@ -90,18 +101,20 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
         "Health Procrastinator" to Pair(R.drawable.health_procrastinator, "I’m contemplating healthy eating but it’s not a priority for me right now. I know the basics about what it means to be healthy, but it doesn’t seem relevant to me right now. I have taken a few steps to be healthier but I am not motivated to make it a high priority because I have too many other things going on in my life."),
         "Food Carefree" to Pair(R.drawable.food_carefree, "I’m not bothered about healthy eating. I don’t really see the point and I don’t think about it. I don’t really notice healthy eating tips or recipes and I don’t care what I eat.")
     )
-    // Load previously selected persona
+    // load any saved persona
     val savedPersona = sharedPref.getString("selectedPersona", "") ?: ""
+    // track current selected persona
     val selectedPersona = remember { mutableStateOf(savedPersona) }
 
-    // Load previously selected time
+    // load any saved times
     val savedMealTime = sharedPref.getString("mealTime", "00:00") ?: "00:00"
     val savedSleepTime = sharedPref.getString("sleepTime", "00:00") ?: "00:00"
     val savedWakeTime = sharedPref.getString("wakeTime", "00:00") ?: "00:00"
-    // Time selection
+    // track current selected times
     val mealTime = remember { mutableStateOf(savedMealTime) }
     val sleepTime = remember { mutableStateOf(savedSleepTime) }
     val wakeTime = remember { mutableStateOf(savedWakeTime) }
+    // Time selection
     val timeCategories = mapOf(
         "What time of day approx. do you normally eat your biggest meal?" to mealTime,
         "What time of day approx. do you go to sleep at night?" to sleepTime,
@@ -109,7 +122,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     )
 
     Column(
-        modifier = modifier.padding(14.dp),
+        modifier = modifier.padding(14.dp)
     ) {
         // Questionnaire title
         Text(
@@ -145,6 +158,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
         // Save button
         Button(
             onClick = {
+                // save responses to SharedPreferences
                 saveResponse(
                     context,
                     userID,
@@ -154,15 +168,13 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
                     sleepTime.value,
                     wakeTime.value
                 )
+                // navigate to HomePage
                 context.startActivity(Intent(context, HomePage::class.java))
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
             modifier = Modifier.align(Alignment.CenterHorizontally)
         ) {
-            Row (
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
+            Row {
                 Icon(
                     painter = painterResource(id = R.drawable.save_icon),
                     contentDescription = "Save",
@@ -175,25 +187,31 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     }
 }
 
+
 /**
- * Checkbox for food categories using manual Rows.
+ * Composable function for food checkboxes.
+ *
+ * @param foodCategories List of food categories.
+ * @param selectedFoods Current selected foods.
  */
 @Composable
 fun FoodCheckboxes(foodCategories: List<String>, selectedFoods: MutableList<String>) {
     Row {
+        // split food categories into 3 columns
         val columns = foodCategories.chunked(3)
         columns.forEach { column ->
-            Column {
+            Column { // create 3 columns
                 column.forEach { category ->
+                    // each food category
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
-                            checked = category in selectedFoods,
+                            checked = category in selectedFoods, // check if food selected
                             onCheckedChange = { isChecked ->
-                                if (isChecked) {
+                                if (isChecked) { // checked food
                                     if (category !in selectedFoods) {
                                         selectedFoods.add(category)
                                     }
-                                } else {
+                                } else { // unchecked food
                                     selectedFoods.remove(category)
                                 }
                             }
@@ -209,22 +227,32 @@ fun FoodCheckboxes(foodCategories: List<String>, selectedFoods: MutableList<Stri
     }
 }
 
+
 @Composable
+/**
+ * Composable function for persona pop-up modals.
+ *
+ * @param personas Map of persona name -> image ID and description.
+ */
 fun PersonaModals(personas: Map<String, Pair<Int, String>>) {
-    var showDialog by remember { mutableStateOf(false) }
-    var selectedDialog by remember { mutableStateOf("") }
+    // track if a pop-up modal is shown
+    var showModal by remember { mutableStateOf(false) }
+    // track current selected pop-up modal
+    var selectedModal by remember { mutableStateOf("") }
 
     Column {
+        // split persona buttons into 2 columns
         personas.keys.chunked(2).forEach { column ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+            Row(horizontalArrangement = Arrangement.Start) {
                 column.forEach { persona ->
                     Button(
                         onClick = {
-                            selectedDialog = persona
-                            showDialog = true },
+                            // show pop-up modal
+                            selectedModal = persona
+                            showModal = true },
                         colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.padding(end = 4.dp)
+                        shape = RoundedCornerShape(4.dp), // less-rounded corners
+                        modifier = Modifier.padding(end = 4.dp) // add space between buttons
                     ) {
                         Text(text = persona, fontSize = 16.sp)
                     }
@@ -233,26 +261,29 @@ fun PersonaModals(personas: Map<String, Pair<Int, String>>) {
         }
     }
 
-    if (showDialog) {
-        val (imageID, description) = personas[selectedDialog] ?: return
+    // show pop-up modal
+    if (showModal) {
+        val (imageID, description) = personas[selectedModal] ?: return
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { showModal = false },
             title = {
+                // Persona title
                 Box(
                     modifier = Modifier.fillMaxWidth(),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = selectedDialog,
+                        text = selectedModal,
                         textAlign = TextAlign.Center
                     )
                 }
                     },
             text = {
+                // Persona description
                 Column (horizontalAlignment = Alignment.CenterHorizontally) {
-                    androidx.compose.foundation.Image(
+                    Image(
                         painter = painterResource(id = imageID),
-                        contentDescription = selectedDialog,
+                        contentDescription = selectedModal,
                         modifier = Modifier.size(200.dp)
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -260,9 +291,9 @@ fun PersonaModals(personas: Map<String, Pair<Int, String>>) {
                 }
             },
             confirmButton = {
-                // if the user clicks on the dismiss button,
+                // Dismiss button
                 Button(
-                    onClick = { showDialog = false },
+                    onClick = { showModal = false },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -273,29 +304,34 @@ fun PersonaModals(personas: Map<String, Pair<Int, String>>) {
     }
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+/**
+ * Composable function for dropdown menu to select persona.
+ *
+ * @param selectedPersona Current selected persona.
+ */
 fun DropdownMenu(selectedPersona: MutableState<String>) {
-    val expanded = remember { mutableStateOf(false) }
     val personas = listOf("Health Devotee", "Mindful Eater", "Wellness Striver", "Balance Seeker", "Health Procrastinator", "Food Carefree")
+    // check if show dropdown menu
+    val expanded = remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
-        expanded = expanded.value,
-        onExpandedChange = { expanded.value = !expanded.value }
+        expanded = expanded.value, // show dropdown menu
+        onExpandedChange = { expanded.value = !expanded.value } // toggle dropdown menu
     ) {
         OutlinedTextField(
-            value = selectedPersona.value,
-            onValueChange = { },
+            value = selectedPersona.value, // current selected persona
+            onValueChange = { }, // do not allow user to type in
             label = { Text("Select Persona") },
-            readOnly = true,
+            readOnly = true, // only can select from dropdown menu
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded.value) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor()
+            modifier = Modifier.fillMaxWidth().menuAnchor() // show dropdown menu onto text field
         )
         ExposedDropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = { expanded.value = false }
+            expanded = expanded.value, // show dropdown menu
+            onDismissRequest = { expanded.value = false } // hide dropdown menu
         ) {
             personas.forEach { persona ->
                 DropdownMenuItem(
@@ -310,46 +346,52 @@ fun DropdownMenu(selectedPersona: MutableState<String>) {
     }
 }
 
+
 @Composable
+/**
+ * Composable function for time picker fields.
+ *
+ * @param timeCategories Map of time category -> current time selected.
+ */
 fun TimePickerFields(timeCategories: Map<String, MutableState<String>>) {
-    val mContext = LocalContext.current
+    // current context to show time picker dialog
+    val context = LocalContext.current
 
     Column {
-        timeCategories.forEach { (label, timeState) ->
+        timeCategories.forEach { (category, time) ->
+            // track if time picker dialog is shown
             var showTimePicker by remember { mutableStateOf(false) }
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+            Row {
+                // Time category
                 Text(
-                    text = label,
+                    text = category,
                     fontSize = 15.sp,
                     textAlign = TextAlign.Justify,
                     modifier = Modifier.weight(0.7f)
                 )
-
+                // Time picker
                 Button(
                     onClick = { showTimePicker = true },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.LightGray),
                     modifier = Modifier.weight(0.2f)
                 ) {
-                    Text(text = timeState.value, fontSize = 14.sp, color = Color.Black)
+                    Text(text = time.value, fontSize = 14.sp, color = Color.Black)
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
 
+            // show time picker pop-up
             if (showTimePicker) {
-                val mCalendar = Calendar.getInstance()
-                val mHour = mCalendar.get(Calendar.HOUR_OF_DAY)
-                val mMinute = mCalendar.get(Calendar.MINUTE)
+                val calendar = Calendar.getInstance()
+                val hour = calendar.get(Calendar.HOUR_OF_DAY)
+                val minute = calendar.get(Calendar.MINUTE)
 
                 TimePickerDialog(
-                    mContext,
-                    { _, mHour: Int, mMinute: Int ->
-                        timeState.value = String.format("%02d:%02d", mHour, mMinute)
-                    }, mHour, mMinute, false
+                    context,
+                    { _, hour: Int, minute: Int ->
+                        time.value = String.format("%02d:%02d", hour, minute)
+                    }, hour, minute, false
                 ).apply {
                     show()
                     setOnDismissListener { showTimePicker = false }
@@ -359,6 +401,18 @@ fun TimePickerFields(timeCategories: Map<String, MutableState<String>>) {
     }
 }
 
+
+/**
+ * Save user's responses to SharedPreferences.
+ *
+ * @param context Context to access SharedPreferences.
+ * @param userID Current login user ID.
+ * @param selectedFoods List of selected food categories.
+ * @param selectedPersona Selected persona.
+ * @param mealTime Selected meal time.
+ * @param sleepTime Selected sleep time.
+ * @param wakeTime Selected wake time.
+ */
 fun saveResponse(
     context: Context,
     userID: String,
@@ -370,6 +424,7 @@ fun saveResponse(
 ) {
     Log.d("Debug", "Current Logged-in User ID: $userID")
 
+    // save all responses to SharedPreferences
     val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE).edit()
     sharedPref.putStringSet("selectedFoods", selectedFoods.toSet())
     sharedPref.putString("selectedPersona", selectedPersona)
@@ -377,7 +432,7 @@ fun saveResponse(
     sharedPref.putString("sleepTime", sleepTime)
     sharedPref.putString("wakeTime", wakeTime)
     sharedPref.apply()
+
     Log.d("SharedPreferences", "Data saved to SharedPreferences: $selectedFoods, $selectedPersona, $mealTime, $sleepTime, $wakeTime")
-    println("Print done")
 }
 

@@ -3,7 +3,6 @@ package com.fit2081.junyet33521026
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -26,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,7 +32,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,13 +42,16 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
+
+/**
+ * Main activity for the application.
+ */
 class HomePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,53 +66,59 @@ class HomePage : ComponentActivity() {
     }
 }
 
+
+/**
+ * Composable function for the UI of Home Page.
+ *
+ * @param modifier Modifier to be applied.
+ */
 @Composable
 fun HomePageScreen(modifier: Modifier = Modifier) {
+    // current context to start activity
     val context = LocalContext.current
+    // load current login user ID
     val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE)
-    val savedUserID = remember { sharedPref.getString("userLoginID", "") ?: "" }
-    val foodScore = remember { loadUserTotalScore(context, savedUserID, "nutritrack_users.csv") }
+    val currentUserID = remember { sharedPref.getString("userLoginID", "") ?: "" }
+    // load food score from CSV file
+    val foodScore = remember { loadUserTotalScore(context, currentUserID, "nutritrack_users.csv") }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(16.dp),
+        modifier = modifier.padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top section with greeting and edit button
+        // Greeting message
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Start
         ) {
             Text(
-                text = "Hello, $savedUserID",
+                text = "Hello, $currentUserID",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold
             )
         }
-
         Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
-
+            // Edit info description
             Text(
                 text = "You have filled in your Food Intake Questionnaire, but you can change the details here.",
                 fontSize = 12.5.sp,
                 textAlign = TextAlign.Justify,
                 modifier = Modifier.weight(0.8f)
             )
-
             Spacer(modifier = Modifier.width(8.dp))
 
+            // Edit button
             Button(
                 onClick = {
-                    context.startActivity(Intent(context, QuestionnairePage::class.java))
+                    context.startActivity(Intent(context, QuestionnairePage::class.java)) // navigate to QuestionnairePage
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 shape = RoundedCornerShape(6.dp),
-                contentPadding = PaddingValues(horizontal = 9.dp, vertical = 4.dp)
+                contentPadding = PaddingValues(horizontal = 9.dp) // padding inside the button
             ) {
                 Icon(
                     imageVector = Icons.Default.Edit,
@@ -123,27 +129,22 @@ fun HomePageScreen(modifier: Modifier = Modifier) {
             }
 
         }
-
         Spacer(modifier = Modifier.height(14.dp))
 
         // Food plate image
         Image(
             painter = painterResource(id = R.drawable.balanced_diet),
             contentDescription = "Food Plate",
-            modifier = Modifier
-                .size(250.dp)
-                .clip(RoundedCornerShape(16.dp))
+            modifier = Modifier.size(250.dp)
         )
-
         Spacer(modifier = Modifier.height(16.dp))
 
         // Food Quality Score
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFE0E0E0), shape = RoundedCornerShape(16.dp))
-                .padding(14.dp)
+            modifier = Modifier.fillMaxWidth() // lengthen the card
+                .background(Color(0xFFE0E0E0), shape = RoundedCornerShape(16.dp)) // light gray background
+                .padding(14.dp) // padding inside the card
         ) {
             Text(
                 text = "Your Food Quality Score",
@@ -156,15 +157,13 @@ fun HomePageScreen(modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.Bold,
                 color = Color(0xff2962ff)
             )
-
             Text(
                 text = "See all scores >",
                 fontSize = 14.sp,
                 color = Color(0xff2962ff),
-                modifier = Modifier.padding(top = 4.dp).clickable { context.startActivity(Intent(context, InsightsPage::class.java)) }
+                modifier = Modifier.padding(top = 4.dp).clickable { context.startActivity(Intent(context, InsightsPage::class.java)) } // navigate to InsightsPage
             )
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
         // Food Quality Score Explanation
@@ -173,7 +172,6 @@ fun HomePageScreen(modifier: Modifier = Modifier) {
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold
         )
-
         Text(
             text = "Your Food Quality Score provides a snapshot of how well your eating patterns " +
                     "align with established food guidelines, helping you identify both strengths " +
@@ -191,11 +189,19 @@ fun HomePageScreen(modifier: Modifier = Modifier) {
     }
 }
 
+
 @Composable
+/**
+ * Composable function for the Bottom Navigation Bar.
+ *
+ * @param context Context to start activities.
+ */
 fun BottomNavigationBar(context: Context) {
     Column {
+        // Gray line separator
         HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
         Spacer(modifier = Modifier.height(10.dp))
+
         Row(
             modifier = Modifier.fillMaxWidth().height(50.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -204,7 +210,7 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
-                    context.startActivity(Intent(context, HomePage::class.java))
+                    context.startActivity(Intent(context, HomePage::class.java)) // navigate to HomePage
                 }
             ) {
                 Icon(
@@ -224,7 +230,7 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
-                    context.startActivity(Intent(context, InsightsPage::class.java))
+                    context.startActivity(Intent(context, InsightsPage::class.java)) // navigate to InsightsPage
                 }
             ) {
                 Icon(
@@ -244,7 +250,7 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
-                    // TODO
+                    // TO BE IMPLEMENTED
                 }
             ) {
                 Icon(
@@ -264,7 +270,7 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
-                    // TODO
+                    // TO BE IMPLEMENTED
                 }
             ) {
                 Icon(
@@ -283,24 +289,34 @@ fun BottomNavigationBar(context: Context) {
     }
 }
 
-// Function to load CSV data and return a map of user ID -> phone number
+
+/**
+ * Function to load user total score from CSV file.
+ *
+ * @param context Context to access assets.
+ * @param userID User ID to search.
+ * @param fileName Name of the CSV file.
+ * @return User's food score.
+ */
 fun loadUserTotalScore(context: Context, userID: String, fileName: String): MutableState<String> {
     val foodScore = mutableStateOf("0")
     val assets = context.assets
-    // Try to open the CSV file and read line by line
+    // open the CSV file and read line by line
     try {
-        val inputStream = assets.open(fileName) // Open the file from assets
-        val reader = BufferedReader(InputStreamReader(inputStream)) // Create a reader
+        // open CSV file from assets
+        val inputStream = assets.open(fileName)
+        // create reader
+        val reader = BufferedReader(InputStreamReader(inputStream))
         reader.useLines { lines ->
-            lines.drop(1).forEach { line -> // Skip header row
-                val values = line.split(",") // Split each line into values
+            lines.drop(1).forEach { line -> // skip header row
+                val values = line.split(",") // split each line into values
                 if (values.size > 1) {
                     if (userID == values[1].trim()) {
                         val sex = values[2].trim()
-                        if (sex == "Male") {
+                        if (sex == "Male") { // obtain food score in terms of male
                             val totalScore = values[3].trim()
                             foodScore.value = totalScore
-                        } else {
+                        } else { // obtain food score in terms of female
                             val totalScore = values[4].trim()
                             foodScore.value = totalScore
                         }

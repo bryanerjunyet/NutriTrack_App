@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,18 +33,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
+
+/**
+ * Main activity for the application.
+ */
 class LoginPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,28 +63,35 @@ class LoginPage : ComponentActivity() {
     }
 }
 
+
+/**
+ * Composable function for the UI of Login screen.
+ *
+ * @param modifier Modifier to be applied.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier) {
+    // current context to start activity
     val context = LocalContext.current
-
-    // Load user accounts from CSV file
+    // load user accounts from CSV file
     val userAccounts = remember { loadUserAccounts(context, "nutritrack_users.csv") }
 
+    // user ID input
     var userInputID by remember { mutableStateOf("") }
+    // user ID dropdown options
     var userOptionsID by remember { mutableStateOf(false) }
-    var phoneNumber by remember { mutableStateOf("") }
+    // input phone number
+    var phoneInputNumber by remember { mutableStateOf("") }
+    // check phone number error
     var phoneNumberError by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Top
+        modifier = modifier.fillMaxSize().padding(32.dp), // maximum size but space on all sides
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        // Logo
+        // NutriTrack Logo
         androidx.compose.foundation.Image(
             painter = painterResource(id = R.drawable.nutritrack_logo2),
             contentDescription = "NutriTrack Logo",
@@ -99,20 +109,20 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 
         // User ID dropdown
         ExposedDropdownMenuBox(
-            expanded = userOptionsID,
-            onExpandedChange = { userOptionsID = !userOptionsID }
+            expanded = userOptionsID, // show dropdown menu
+            onExpandedChange = { userOptionsID = !userOptionsID } // toggle dropdown menu
         ) {
             OutlinedTextField(
-                value = userInputID,
-                onValueChange = { },
+                value = userInputID, // current user ID login
+                onValueChange = { }, // do not allow user to type in
                 label = { Text("Select User ID") },
-                readOnly = true,
+                readOnly = true, // only can select from dropdown menu
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(userOptionsID) },
-                modifier = Modifier.fillMaxWidth().menuAnchor()
+                modifier = Modifier.fillMaxWidth().menuAnchor() // show dropdown menu onto text field
             )
             DropdownMenu(
-                expanded = userOptionsID,
-                onDismissRequest = { userOptionsID = false }
+                expanded = userOptionsID,  // show dropdown menu
+                onDismissRequest = { userOptionsID = false } // hide dropdown menu
             ) {
                 userAccounts.keys.forEach { userID ->
                     DropdownMenuItem(
@@ -129,9 +139,11 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 
         // Phone number
         OutlinedTextField(
-            value = phoneNumber,
+            value = phoneInputNumber, // current phone number
             onValueChange = {
-                phoneNumber = it
+                // phone number input
+                phoneInputNumber = it
+                // check email valid every value changes
                 phoneNumberError = !isValidUser(userInputID, it, userAccounts) },
             label = { Text("Enter Phone Number") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -142,6 +154,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 
         // Phone number validation
         if (phoneNumberError) {
+            // Error message
             Text(
                 text = "Phone number does not match.",
                 fontSize = 15.sp,
@@ -162,41 +175,50 @@ fun LoginScreen(modifier: Modifier = Modifier) {
         // Continue button
         Button(
             onClick = {
-                // check if the username and password are correct
-                if (isValidUser(userInputID, phoneNumber, userAccounts)) {
-                    // if correct show a toast message
+                // check username and password valid
+                if (isValidUser(userInputID, phoneInputNumber, userAccounts)) {
+                    // save current login userID to SharedPreference
                     saveUserID(context, userInputID)
+                    // show success message
                     Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
+                    // navigate to QuestionnairePage
                     context.startActivity(Intent(context, QuestionnairePage::class.java))
-                } else {
-                    // if incorrect show a toast message
-                    Toast.makeText(context, "Incorrect Credentials.", Toast
-                        .LENGTH_LONG).show()
+                } else { // show error message
+                    Toast.makeText(context, "Incorrect Credentials.", Toast.LENGTH_LONG).show()
                 }
             },
             modifier = Modifier.fillMaxWidth(0.5f),
-            colors = ButtonDefaults.buttonColors(containerColor = androidx.compose.ui.graphics.Color.Red)
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
         ) {
             Text("Continue", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
     }
 }
 
-// Function to load CSV data and return a map of user ID -> phone number
+
+/**
+ * Loads user accounts from a CSV file in the assets folder.
+ * Only two columns: phone number and user ID.
+ * @param context The context to access the assets.
+ * @param fileName The name of the CSV file in the assets folder.
+ * @return A map of user ID -> phone number.
+ */
 fun loadUserAccounts(context: Context, fileName: String): Map<String, String> {
     val userAccounts = mutableMapOf<String, String>()
     val assets = context.assets
-    // Try to open the CSV file and read line by line
+    // open the CSV file and read line by line
     try {
-        val inputStream = assets.open(fileName) // Open the file from assets
-        val reader = BufferedReader(InputStreamReader(inputStream)) // Create a reader
+        // open CSV file from assets
+        val inputStream = assets.open(fileName)
+        // create reader
+        val reader = BufferedReader(InputStreamReader(inputStream))
         reader.useLines { lines ->
-            lines.drop(1).forEach { line -> // Skip header row
-                val values = line.split(",") // Split each line into values
+            lines.drop(1).forEach { line -> // skip header row
+                val values = line.split(",") // split each line into values
                 if (values.size > 1) {
                     val phoneNumber = values[0].trim('"')
                     val userID = values[1].trim()
-                    // Build a map of user ID -> phone number
+                    // build a map of user ID -> phone number
                     userAccounts[userID] = phoneNumber
                 }
             }
@@ -207,14 +229,29 @@ fun loadUserAccounts(context: Context, fileName: String): Map<String, String> {
     return userAccounts
 }
 
-// Function to validate user login
+
+/**
+ * Check provided user ID and phone number match.
+ *
+ * @param userID User ID to validate.
+ * @param phoneNumber Phone number to validate.
+ * @param userAccounts A map of user ID -> phone number.
+ * @return True if user ID and phone number match, false otherwise.
+ */
 fun isValidUser(userID: String, phoneNumber: String, userAccounts: Map<String, String>): Boolean {
     return userAccounts[userID] == phoneNumber
 }
 
-// Function to save userID to SharedPreferences
+
+/**
+ * Save user ID to SharedPreference.
+ *
+ * @param context Context to access SharedPreference.
+ * @param userID User ID to save.
+ */
 fun saveUserID(context: Context, userID: String) {
     val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE).edit()
+    // save user ID to SharedPreference
     sharedPref.putString("userLoginID", userID)
     sharedPref.apply()
 }
