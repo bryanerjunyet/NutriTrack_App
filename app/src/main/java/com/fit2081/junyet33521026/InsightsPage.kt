@@ -123,8 +123,32 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
                 text = "${totalScore.toInt()}/100",
                 fontSize = 50.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xff2962ff)
+                color = when { // set color based on score
+                    totalScore < 50 -> Color(0xFFBB0E01)
+                    totalScore < 70 -> Color(0xff2962ff)
+                    else -> Color(0xFF2E7D32)
+                }
             )
+            Spacer(modifier = Modifier.height(8.dp))
+            // Progress bar
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                LinearProgressIndicator(
+                    progress = { (totalScore / 100) },
+                    modifier = Modifier
+                        .weight(0.6f) // lengthen the bar
+                        .height(10.dp) // height of the bar
+                        .clip(RoundedCornerShape(5.dp)), // rounded corners
+                    color = when { // set color based on score
+                        totalScore < 50 -> Color(0xFFBB0E01)
+                        totalScore < 70 -> Color(0xff2962ff)
+                        else -> Color(0xFF2E7D32)
+                    },
+                    trackColor = Color(0xFFE0E0E0)
+                )
+            }
         }
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -155,7 +179,7 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
                         shareIntent.putExtra(Intent.EXTRA_TEXT, insightsText.toString())
                         context.startActivity(Intent.createChooser(shareIntent, "Share your food insights via"))
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                     modifier = Modifier.weight(0.5f)
                 ) {
                     Row {
@@ -175,7 +199,7 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
             Row (modifier = Modifier.fillMaxWidth(0.6f)) {
                 Button(
                     onClick = { /* TO BE IMPLEMENTED */ },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                     modifier = Modifier.weight(0.5f)
                 ) {
                     Row {

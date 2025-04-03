@@ -155,12 +155,15 @@ fun HomePageScreen(modifier: Modifier = Modifier) {
                 text = "${foodScore.value.toInt()}/100",
                 fontSize = 50.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xff2962ff)
+                color = when { // set color based on score
+                    foodScore.value.toInt() < 50 -> Color(0xFFBB0E01)
+                    foodScore.value.toInt() < 70 -> Color(0xff2962ff)
+                    else -> Color(0xFF2E7D32)
+                }
             )
             Text(
                 text = "See all scores >",
                 fontSize = 14.sp,
-                color = Color(0xff2962ff),
                 modifier = Modifier.padding(top = 4.dp).clickable { context.startActivity(Intent(context, InsightsPage::class.java)) } // navigate to InsightsPage
             )
         }
@@ -175,11 +178,11 @@ fun HomePageScreen(modifier: Modifier = Modifier) {
         Text(
             text = "Your Food Quality Score provides a snapshot of how well your eating patterns " +
                     "align with established food guidelines, helping you identify both strengths " +
-                    "and opportunities for improvement in your diet. \n\n This personalised " +
+                    "and opportunities for improvement in your diet. \n This personalised " +
                     "measurement considers various food groups including vegetables, fruits, " +
                     "whole grains, and proteins to give you practical insights for making " +
                     "healthier food choics.",
-            style = MaterialTheme.typography.bodyMedium,
+            fontSize = 12.sp,
             modifier = Modifier.padding(top = 8.dp)
         )
 
