@@ -181,8 +181,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                     saveUserID(context, userInputID)
                     // show success message
                     Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
-                    // navigate to QuestionnairePage
-                    context.startActivity(Intent(context, QuestionnairePage::class.java))
+                    // decide which page to navigate
+                    navigateDecision(context, userInputID)
                 } else { // show error message
                     Toast.makeText(context, "Incorrect Credentials.", Toast.LENGTH_LONG).show()
                 }
@@ -254,4 +254,16 @@ fun saveUserID(context: Context, userID: String) {
     // save user ID to SharedPreference
     sharedPref.putString("userLoginID", userID)
     sharedPref.apply()
+}
+
+fun navigateDecision( context: Context, userID: String) {
+    val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE)
+    val completedResponse = sharedPref.getBoolean("completedResponse", false)
+    if (completedResponse) {
+        // navigate to HomePage
+        context.startActivity(Intent(context, HomePage::class.java))
+    } else {
+        // navigate to QuestionnairePage
+        context.startActivity(Intent(context, QuestionnairePage::class.java))
+    }
 }

@@ -85,6 +85,8 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     // load any saved responses
     val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE)
 
+    Log.d("Debug", "Current Logged-in User ID: $userID")
+    Log.d("Debug", "Current SharedPreferences: ${sharedPref.all}")
     // Food selection
     val foodCategories = listOf("Fruits", "Red Meat", "Fish", "Vegetables", "Seafood", "Eggs", "Grains", "Poultry", "Nuts/Seeds")
     // load any saved foods
@@ -426,6 +428,7 @@ fun saveResponse(
 
     // save all responses to SharedPreferences
     val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE).edit()
+    sharedPref.putBoolean("completedResponse", true)
     sharedPref.putStringSet("selectedFoods", selectedFoods.toSet())
     sharedPref.putString("selectedPersona", selectedPersona)
     sharedPref.putString("mealTime", mealTime)

@@ -298,8 +298,8 @@ fun BottomNavigationBar(context: Context) {
  * @param fileName Name of the CSV file.
  * @return User's food score.
  */
-fun loadUserTotalScore(context: Context, userID: String, fileName: String): MutableState<String> {
-    val foodScore = mutableStateOf("0")
+fun loadUserTotalScore(context: Context, userID: String, fileName: String): MutableState<Float> {
+    val foodScore = mutableStateOf(0f)
     val assets = context.assets
     // open the CSV file and read line by line
     try {
@@ -314,10 +314,10 @@ fun loadUserTotalScore(context: Context, userID: String, fileName: String): Muta
                     if (userID == values[1].trim()) {
                         val sex = values[2].trim()
                         if (sex == "Male") { // obtain food score in terms of male
-                            val totalScore = values[3].trim()
+                            val totalScore = values[3].trim().toFloat()
                             foodScore.value = totalScore
                         } else { // obtain food score in terms of female
-                            val totalScore = values[4].trim()
+                            val totalScore = values[4].trim().toFloat()
                             foodScore.value = totalScore
                         }
                     }
