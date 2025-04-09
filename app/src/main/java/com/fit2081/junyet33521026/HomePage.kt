@@ -178,7 +178,7 @@ fun HomePageScreen(modifier: Modifier = Modifier) {
         Text(
             text = "Your Food Quality Score provides a snapshot of how well your eating patterns " +
                     "align with established food guidelines, helping you identify both strengths " +
-                    "and opportunities for improvement in your diet. \n This personalised " +
+                    "and opportunities for improvement in your diet. \nThis personalised " +
                     "measurement considers various food groups including vegetables, fruits, " +
                     "whole grains, and proteins to give you practical insights for making " +
                     "healthier food choics.",

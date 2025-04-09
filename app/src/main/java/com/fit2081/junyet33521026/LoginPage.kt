@@ -216,7 +216,7 @@ fun loadUserAccounts(context: Context, fileName: String): Map<String, String> {
             lines.drop(1).forEach { line -> // skip header row
                 val values = line.split(",") // split each line into values
                 if (values.size > 1) {
-                    val phoneNumber = values[0].trim('"')
+                    val phoneNumber = values[0].trim()
                     val userID = values[1].trim()
                     // build a map of user ID -> phone number
                     userAccounts[userID] = phoneNumber
