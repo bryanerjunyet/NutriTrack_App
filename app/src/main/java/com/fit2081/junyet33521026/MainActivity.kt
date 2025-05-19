@@ -40,17 +40,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        // Setup database and import CSV when first launch
-        val db = NutriTrackDatabase.getDatabase(this)
-        val patientViewModel = ViewModelProvider(
-            this, PatientViewModel.PatientViewModelFactory(this)
-        )[PatientViewModel::class.java]
-
-        lifecycleScope.launch {
-            patientViewModel.importPatientsFromCsv(this@MainActivity)
-        }
-
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
