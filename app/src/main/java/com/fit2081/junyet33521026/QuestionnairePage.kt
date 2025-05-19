@@ -30,6 +30,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -107,6 +108,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     val savedPersona = sharedPref.getString("selectedPersona", "") ?: ""
     // track current selected persona
     val selectedPersona = remember { mutableStateOf(savedPersona) }
+    var personaError by remember { mutableStateOf(false) }
 
     // load any saved times
     val savedMealTime = sharedPref.getString("mealTime", "00:00") ?: "00:00"
@@ -116,6 +118,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
     val mealTime = remember { mutableStateOf(savedMealTime) }
     val sleepTime = remember { mutableStateOf(savedSleepTime) }
     val wakeTime = remember { mutableStateOf(savedWakeTime) }
+    var timeError by remember { mutableStateOf(false) }
     // Time selection
     val timeCategories = mapOf(
         "What time of day approx. do you normally eat your biggest meal?" to mealTime,
@@ -139,39 +142,60 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
         // Food selection
         Text(text = "Tick all the food categories you can eat", fontSize = 17.sp, fontWeight = FontWeight.Medium)
         FoodCheckboxes(foodCategories, selectedFoods)
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Persona description
         Text(text = "Your Persona", fontSize = 17.sp, fontWeight = FontWeight.Medium)
         PersonaModals(personaCategories)
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Persona selection
         Text(text = "Which persona best fits you?", fontSize = 17.sp, fontWeight = FontWeight.Medium)
         DropdownMenu(selectedPersona)
-        Spacer(modifier = Modifier.height(16.dp))
+        if (personaError) {
+            Text(
+                text = "Please select a persona.",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Time selection
         Text(text = "Timings", fontSize = 17.sp, fontWeight = FontWeight.Medium)
         Spacer(modifier = Modifier.height(10.dp))
         TimePickerFields(timeCategories)
-        Spacer(modifier = Modifier.height(20.dp))
+        if (timeError) {
+            Text(
+                text = "Selected time must be different.",
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
 
         // Save button
         Button(
             onClick = {
-                // save responses to SharedPreferences
-                saveResponse(
-                    context,
-                    userID,
-                    selectedFoods,
-                    selectedPersona.value,
-                    mealTime.value,
-                    sleepTime.value,
-                    wakeTime.value
-                )
-                // navigate to HomePage
-                context.startActivity(Intent(context, HomePage::class.java))
+                personaError = selectedPersona.value.isEmpty()
+                timeError = mealTime.value == sleepTime.value || mealTime.value == wakeTime.value || sleepTime.value == wakeTime.value
+
+                if (!personaError && !timeError) {
+                    // save responses to SharedPreferences
+                    saveResponse(
+                        context,
+                        userID,
+                        selectedFoods,
+                        selectedPersona.value,
+                        mealTime.value,
+                        sleepTime.value,
+                        wakeTime.value
+                    )
+                    // navigate to HomePage
+                    context.startActivity(Intent(context, HomePage::class.java))
+                }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
             modifier = Modifier.align(Alignment.CenterHorizontally)

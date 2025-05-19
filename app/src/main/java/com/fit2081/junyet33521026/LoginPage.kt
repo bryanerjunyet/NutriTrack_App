@@ -143,8 +143,7 @@ fun LoginScreen(modifier: Modifier = Modifier) {
             onValueChange = {
                 // phone number input
                 phoneInputNumber = it
-                // check email valid every value changes
-                phoneNumberError = !isValidUser(userInputID, it, userAccounts) },
+            },
             label = { Text("Enter Phone Number") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             isError = phoneNumberError,
@@ -176,7 +175,8 @@ fun LoginScreen(modifier: Modifier = Modifier) {
         Button(
             onClick = {
                 // check username and password valid
-                if (isValidUser(userInputID, phoneInputNumber, userAccounts)) {
+                phoneNumberError = !isValidUser(userInputID, phoneInputNumber, userAccounts)
+                if (!phoneNumberError) {
                     // save current login userID to SharedPreference
                     saveUserID(context, userInputID)
                     // show success message
@@ -212,13 +212,20 @@ fun loadUserAccounts(context: Context, fileName: String): Map<String, String> {
         val inputStream = assets.open(fileName)
         // create reader
         val reader = BufferedReader(InputStreamReader(inputStream))
+
+        // read header row to map column names
+        val headerRow = reader.readLine() ?: return emptyMap()
+        val headers = headerRow.replace("\uFEFF", "").split(",").map { it.trim() }
+        val headerMap = headers.mapIndexed { index, header -> header to index }.toMap()
+
         reader.useLines { lines ->
-            lines.drop(1).forEach { line -> // skip header row
+            lines.forEach { line ->
                 val values = line.split(",") // split each line into values
-                if (values.size > 1) {
-                    val phoneNumber = values[0].trim()
-                    val userID = values[1].trim()
-                    // build a map of user ID -> phone number
+                // access columns using headerMap
+                val phoneNumber = values.getOrNull(headerMap["PhoneNumber"] ?: -1)?.trim()
+                val userID = values.getOrNull(headerMap["User_ID"] ?: -1)?.trim()
+
+                if (!phoneNumber.isNullOrEmpty() && !userID.isNullOrEmpty()) {
                     userAccounts[userID] = phoneNumber
                 }
             }

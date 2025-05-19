@@ -310,19 +310,22 @@ fun loadUserTotalScore(context: Context, userID: String, fileName: String): Muta
         val inputStream = assets.open(fileName)
         // create reader
         val reader = BufferedReader(InputStreamReader(inputStream))
+
+        // read the header row to map column names
+        val headerRow = reader.readLine() ?: return foodScore
+        val headers = headerRow.split(",").map { it.trim() }
+        val headerMap = headers.mapIndexed { index, header -> header to index }.toMap()
+
         reader.useLines { lines ->
-            lines.drop(1).forEach { line -> // skip header row
+            lines.forEach { line ->
                 val values = line.split(",") // split each line into values
-                if (values.size > 1) {
-                    if (userID == values[1].trim()) {
-                        val sex = values[2].trim()
-                        if (sex == "Male") { // obtain food score in terms of male
-                            val totalScore = values[3].trim().toFloat()
-                            foodScore.value = totalScore
-                        } else { // obtain food score in terms of female
-                            val totalScore = values[4].trim().toFloat()
-                            foodScore.value = totalScore
-                        }
+                // check row matches given user ID
+                if (values.getOrNull(headerMap["User_ID"] ?: -1) == userID) {
+                    val sex = values.getOrNull(headerMap["Sex"] ?: -1)
+                    if (sex == "Male") {
+                        foodScore.value = values.getOrNull(headerMap["HEIFAtotalscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f
+                    } else if (sex == "Female") {
+                        foodScore.value = values.getOrNull(headerMap["HEIFAtotalscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f
                     }
                 }
             }
