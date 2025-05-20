@@ -27,6 +27,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,7 +42,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
+import kotlinx.coroutines.launch
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
@@ -53,10 +60,18 @@ class LoginPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val patientViewModel = ViewModelProvider(
+            this, PatientViewModel.PatientViewModelFactory(this)
+        )[PatientViewModel::class.java]
+
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LoginScreen(Modifier.padding(innerPadding))
+                    LoginScreen(
+                        Modifier.padding(innerPadding),
+                        patientViewModel
+                    )
                 }
             }
         }
@@ -71,23 +86,27 @@ class LoginPage : ComponentActivity() {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier) {
+fun LoginScreen(
+    modifier: Modifier = Modifier,
+    viewModel: PatientViewModel
+) {
     // current context to start activity
     val context = LocalContext.current
-    // load user accounts from CSV file
-    val userAccounts = remember { loadUserAccounts(context, "nutritrack_users.csv") }
+    val userAccounts by viewModel.allUserIds.collectAsState(initial = emptyList())
 
     // user ID input
     var userInputID by remember { mutableStateOf("") }
     // user ID dropdown options
     var userOptionsID by remember { mutableStateOf(false) }
     // input phone number
-    var phoneInputNumber by remember { mutableStateOf("") }
+    var passwordInput by remember { mutableStateOf("") }
     // check phone number error
-    var phoneNumberError by remember { mutableStateOf(false) }
+    var passwordError by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(32.dp), // maximum size but space on all sides
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp), // maximum size but space on all sides
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
@@ -118,13 +137,15 @@ fun LoginScreen(modifier: Modifier = Modifier) {
                 label = { Text("Select User ID") },
                 readOnly = true, // only can select from dropdown menu
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(userOptionsID) },
-                modifier = Modifier.fillMaxWidth().menuAnchor() // show dropdown menu onto text field
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor() // show dropdown menu onto text field
             )
             DropdownMenu(
                 expanded = userOptionsID,  // show dropdown menu
                 onDismissRequest = { userOptionsID = false } // hide dropdown menu
             ) {
-                userAccounts.keys.forEach { userID ->
+                userAccounts.forEach { userID ->
                     DropdownMenuItem(
                         text = { Text(userID) },
                         onClick = {
@@ -139,27 +160,27 @@ fun LoginScreen(modifier: Modifier = Modifier) {
 
         // Phone number
         OutlinedTextField(
-            value = phoneInputNumber, // current phone number
+            value = passwordInput, // current phone number
             onValueChange = {
                 // phone number input
-                phoneInputNumber = it
+                passwordInput = it
             },
-            label = { Text("Enter Phone Number") },
+            label = { Text("Enter Password") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-            isError = phoneNumberError,
+            isError = passwordError,
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(16.dp))
 
         // Phone number validation
-        if (phoneNumberError) {
+        if (passwordError) {
             // Error message
             Text(
-                text = "Phone number does not match.",
+                text = "Incorrect password.",
                 fontSize = 15.sp,
                 color = MaterialTheme.colorScheme.error,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(start = 16.dp, top = 4.dp, bottom = 4.dp)
+                modifier = Modifier.padding(start = 16.dp, bottom = 4.dp)
             )
         }
 
@@ -174,17 +195,16 @@ fun LoginScreen(modifier: Modifier = Modifier) {
         // Continue button
         Button(
             onClick = {
-                // check username and password valid
-                phoneNumberError = !isValidUser(userInputID, phoneInputNumber, userAccounts)
-                if (!phoneNumberError) {
-                    // save current login userID to SharedPreference
-                    saveUserID(context, userInputID)
-                    // show success message
-                    Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
-                    // decide which page to navigate
-                    navigateDecision(context, userInputID)
-                } else { // show error message
-                    Toast.makeText(context, "Incorrect Credentials.", Toast.LENGTH_LONG).show()
+                viewModel.viewModelScope.launch {
+                    passwordError = !viewModel.validateCredentials(userInputID, passwordInput)
+                    if (!passwordError) {
+                        Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
+                        AuthManager.login(userInputID)
+                        // decide which page to navigate
+                        navigateDecision(context, userInputID)
+                    } else {
+                        Toast.makeText(context, "Incorrect Credentials.", Toast.LENGTH_LONG).show()
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(0.5f),
@@ -192,85 +212,27 @@ fun LoginScreen(modifier: Modifier = Modifier) {
         ) {
             Text("Continue", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
-    }
-}
+        Spacer(modifier = Modifier.height(10.dp))
 
-
-/**
- * Loads user accounts from a CSV file in the assets folder.
- * Only two columns: phone number and user ID.
- * @param context The context to access the assets.
- * @param fileName The name of the CSV file in the assets folder.
- * @return A map of user ID -> phone number.
- */
-fun loadUserAccounts(context: Context, fileName: String): Map<String, String> {
-    val userAccounts = mutableMapOf<String, String>()
-    val assets = context.assets
-    // open the CSV file and read line by line
-    try {
-        // open CSV file from assets
-        val inputStream = assets.open(fileName)
-        // create reader
-        val reader = BufferedReader(InputStreamReader(inputStream))
-
-        // read header row to map column names
-        val headerRow = reader.readLine() ?: return emptyMap()
-        val headers = headerRow.replace("\uFEFF", "").split(",").map { it.trim() }
-        val headerMap = headers.mapIndexed { index, header -> header to index }.toMap()
-
-        reader.useLines { lines ->
-            lines.forEach { line ->
-                val values = line.split(",") // split each line into values
-                // access columns using headerMap
-                val phoneNumber = values.getOrNull(headerMap["PhoneNumber"] ?: -1)?.trim()
-                val userID = values.getOrNull(headerMap["User_ID"] ?: -1)?.trim()
-
-                if (!phoneNumber.isNullOrEmpty() && !userID.isNullOrEmpty()) {
-                    userAccounts[userID] = phoneNumber
-                }
-            }
+        // Register button
+        Button(
+            onClick = { context.startActivity(Intent(context, RegistrationPage::class.java)) },
+            modifier = Modifier.fillMaxWidth(0.5f),
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+        ) {
+            Text("Register", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
     }
-    return userAccounts
 }
 
 
-/**
- * Check provided user ID and phone number match.
- *
- * @param userID User ID to validate.
- * @param phoneNumber Phone number to validate.
- * @param userAccounts A map of user ID -> phone number.
- * @return True if user ID and phone number match, false otherwise.
- */
-fun isValidUser(userID: String, phoneNumber: String, userAccounts: Map<String, String>): Boolean {
-    return userAccounts[userID] == phoneNumber
-}
-
-
-/**
- * Save user ID to SharedPreference.
- *
- * @param context Context to access SharedPreference.
- * @param userID User ID to save.
- */
-fun saveUserID(context: Context, userID: String) {
-    val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE).edit()
-    // save user ID to SharedPreference
-    sharedPref.putString("userLoginID", userID)
-    sharedPref.apply()
-}
-
-fun navigateDecision( context: Context, userID: String) {
-    val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE)
+fun navigateDecision(context: Context, userId: String) {
+    val sharedPref = context.getSharedPreferences("${userId}Response", Context.MODE_PRIVATE)
     val completedResponse = sharedPref.getBoolean("completedResponse", false)
     if (completedResponse) {
-        // navigate to HomePage
         context.startActivity(Intent(context, HomePage::class.java))
     } else {
-        // navigate to QuestionnairePage
         context.startActivity(Intent(context, QuestionnairePage::class.java))
     }
 }
+

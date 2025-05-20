@@ -30,7 +30,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import com.fit2081.junyet33521026.data.NutriTrackDatabase
+import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
+import kotlinx.coroutines.launch
 
 
 /**
@@ -40,6 +45,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Database setup at first launch
+        val db = NutriTrackDatabase.getDatabase(this)
+        val patientViewModel = ViewModelProvider(
+            this, PatientViewModel.PatientViewModelFactory(this)
+        )[PatientViewModel::class.java]
+
+        lifecycleScope.launch {
+            patientViewModel.importPatientsFromCsv(this@MainActivity)
+        }
+
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->

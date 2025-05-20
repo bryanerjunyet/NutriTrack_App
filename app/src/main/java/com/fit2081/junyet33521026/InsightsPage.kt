@@ -25,7 +25,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +39,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -49,10 +54,15 @@ class InsightsPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val patientViewModel = ViewModelProvider(
+            this, PatientViewModel.PatientViewModelFactory(this)
+        )[PatientViewModel::class.java]
+
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    InsightsPageScreen(Modifier.padding(innerPadding))
+                    InsightsPageScreen(Modifier.padding(innerPadding), patientViewModel)
                 }
             }
         }
@@ -66,20 +76,59 @@ class InsightsPage : ComponentActivity() {
  *
  * @param modifier Modifier to be applied.
  */
-fun InsightsPageScreen(modifier: Modifier = Modifier) {
+fun InsightsPageScreen(
+    modifier: Modifier = Modifier,
+    viewModel: PatientViewModel
+) {
     // current context to start activity
     val context = LocalContext.current
     // load current login user ID
     val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE)
-    val currentUserID = remember { sharedPref.getString("userLoginID", "") ?: "" }
+    val currentUserID = AuthManager.currentUserId ?: return
     // load food score from CSV file
-    val foodScores = remember { loadUserFoodScores(context, currentUserID, "nutritrack_users.csv") }
-    // load total food score from CSV file
-    val totalScore = foodScores.firstOrNull()?.second ?: 0f
+    val foodScores = remember { mutableStateOf<List<Pair<String, Float>>>(emptyList()) }
+
+    LaunchedEffect(currentUserID) {
+        val patient = viewModel.getPatient(currentUserID)
+        patient?.let {
+            val scores = mutableListOf<Pair<String, Float>>()
+
+            if (patient.sex == "Male") {
+                scores.add("Total Score" to patient.heifaTotalScoreMale)
+                scores.add("Discretionary" to patient.discretionaryHeifaScoreMale)
+                scores.add("Meat" to patient.meatAndAlternativesHeifaScoreMale)
+                scores.add("Dairy" to patient.dairyAndAlternativesHeifaScoreMale)
+                scores.add("Sugar" to patient.sugarHeifaScoreMale)
+                scores.add("Sodium" to patient.sodiumHeifaScoreMale)
+                scores.add("Grains & Cereal" to (patient.grainsAndCerealsHeifaScoreMale + patient.wholegrainsHeifaScoreMale))
+                scores.add("Vegetables" to patient.vegetablesHeifaScoreMale)
+                scores.add("Fruits" to patient.fruitHeifaScoreMale)
+                scores.add("Alcohol" to patient.alcoholHeifaScoreMale)
+                scores.add("Water" to patient.waterHeifaScoreMale)
+                scores.add("Saturated Fat" to (patient.saturatedFatHeifaScoreMale + patient.unsaturatedFatHeifaScoreMale))
+            } else {
+                scores.add("Total Score" to patient.heifaTotalScoreFemale)
+                scores.add("Discretionary" to patient.discretionaryHeifaScoreFemale)
+                scores.add("Meat" to patient.meatAndAlternativesHeifaScoreFemale)
+                scores.add("Dairy" to patient.dairyAndAlternativesHeifaScoreFemale)
+                scores.add("Sugar" to patient.sugarHeifaScoreFemale)
+                scores.add("Sodium" to patient.sodiumHeifaScoreFemale)
+                scores.add("Grains & Cereal" to (patient.grainsAndCerealsHeifaScoreFemale + patient.wholegrainsHeifaScoreFemale))
+                scores.add("Vegetables" to patient.vegetablesHeifaScoreFemale)
+                scores.add("Fruits" to patient.fruitHeifaScoreFemale)
+                scores.add("Alcohol" to patient.alcoholHeifaScoreFemale)
+                scores.add("Water" to patient.waterHeifaScoreFemale)
+                scores.add("Saturated Fat" to (patient.saturatedFatHeifaScoreFemale + patient.unsaturatedFatHeifaScoreFemale))
+            }
+
+            foodScores.value = scores
+        }
+    }
 
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp)
     ) {
+        val totalScore = foodScores.value.firstOrNull()?.second?.toInt() ?: 0
 
         // Insights title
         Row (
@@ -97,7 +146,7 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Category Progress Bars
-        foodScores.drop(1).forEachIndexed { index, (food, score) ->
+        foodScores.value.drop(1).forEachIndexed { index, (food, score) ->
             // Skip the first item (total score)
             // Full score for first 6 items is 10, the rest is 5
             val fullScore = if (index <= 6) 10 else 5
@@ -120,7 +169,7 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "${totalScore.toInt()}/100",
+                text = "${totalScore}/100",
                 fontSize = 50.sp,
                 fontWeight = FontWeight.Bold,
                 color = when { // set color based on score
@@ -136,7 +185,7 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
                 verticalAlignment = Alignment.CenterVertically
             ){
                 LinearProgressIndicator(
-                    progress = { (totalScore / 100) },
+                    progress = { (totalScore.toFloat() / 100) },
                     modifier = Modifier
                         .weight(0.6f) // lengthen the bar
                         .height(10.dp) // height of the bar
@@ -170,8 +219,8 @@ fun InsightsPageScreen(modifier: Modifier = Modifier) {
                         insightsText.append("Total Food Score: ${totalScore.toInt()}/100\n\n")
                         insightsText.append("Food Categories Score:\n")
 
-                        for ((category, score) in foodScores.drop(1)) {
-                            val fullScore = if (foodScores.indexOf(Pair(category, score)) <= 6) 10 else 5
+                        foodScores.value.drop(1).forEachIndexed { index, (category, score) ->
+                            val fullScore = if (index < 6) 10 else 5
                             insightsText.append("- $category: ${score.toInt()}/$fullScore\n")
                         }
                         insightsText.append("\n\nShared from NutriTrack App")

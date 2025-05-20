@@ -35,6 +35,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -50,8 +51,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.data.FoodIntake
+import com.fit2081.junyet33521026.data.FoodIntakeViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
+import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import java.util.Calendar
+import androidx.core.content.edit
 
 
 /**
@@ -61,10 +70,18 @@ class QuestionnairePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val foodIntakeViewModel = ViewModelProvider(
+            this, FoodIntakeViewModel.FoodIntakeViewModelFactory(this)
+        )[FoodIntakeViewModel::class.java]
+
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    FoodIntakeQuestionnaireScreen(Modifier.padding(innerPadding))
+                    FoodIntakeQuestionnaireScreen(
+                        Modifier.padding(innerPadding),
+                        foodIntakeViewModel
+                    )
                 }
             }
         }
@@ -73,27 +90,37 @@ class QuestionnairePage : ComponentActivity() {
 
 
 @Composable
-/**
+        /**
  * Composable function for the UI of Food Intake Questionnaire screen.
  *
  * @param modifier Modifier to be applied.
  */
-fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
+fun FoodIntakeQuestionnaireScreen(
+    modifier: Modifier = Modifier,
+    viewModel: FoodIntakeViewModel
+) {
     // current context to start activity
     val context = LocalContext.current
     // load user accounts from CSV file
-    val userID = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE).getString("userLoginID", "") ?: ""
+    val userID = AuthManager.currentUserId ?: return
     // load any saved responses
-    val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE)
+    val existingFoodIntake = remember { mutableStateOf<FoodIntake?>(null) }
 
-    Log.d("Debug", "Current Logged-in User ID: $userID")
-    Log.d("Debug", "Current SharedPreferences: ${sharedPref.all}")
+    LaunchedEffect(userID) {
+        existingFoodIntake.value = viewModel.getLatestFoodIntake(userID)
+        Log.d("QuestionnairePage", "Existing Food Intake: ${existingFoodIntake.value}")
+    }
+
     // Food selection
     val foodCategories = listOf("Fruits", "Red Meat", "Fish", "Vegetables", "Seafood", "Eggs", "Grains", "Poultry", "Nuts/Seeds")
-    // load any saved foods
-    val savedFoods = sharedPref.getStringSet("selectedFoods", setOf()) ?: setOf()
-    // track current selected foods
-    val selectedFoods = remember { mutableStateListOf<String>().apply { addAll(savedFoods) } }
+    val selectedFoods = remember {
+        mutableStateListOf<String>().apply {
+            existingFoodIntake.value?.let {
+                addAll(Json.decodeFromString<List<String>>(it.selectedFoods))
+            }
+        }
+    }
+    Log.d("QuestionnairePage", "Selected Foods: $selectedFoods")
 
     // Persona selection
     val personaCategories = mapOf(
@@ -105,19 +132,16 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
         "Food Carefree" to Pair(R.drawable.food_carefree, "I’m not bothered about healthy eating. I don’t really see the point and I don’t think about it. I don’t really notice healthy eating tips or recipes and I don’t care what I eat.")
     )
     // load any saved persona
-    val savedPersona = sharedPref.getString("selectedPersona", "") ?: ""
     // track current selected persona
-    val selectedPersona = remember { mutableStateOf(savedPersona) }
+    val selectedPersona = remember { mutableStateOf(existingFoodIntake.value?.persona ?: "") }
     var personaError by remember { mutableStateOf(false) }
+    Log.d("QuestionnairePage", "Selected Persona: $selectedPersona")
 
     // load any saved times
-    val savedMealTime = sharedPref.getString("mealTime", "00:00") ?: "00:00"
-    val savedSleepTime = sharedPref.getString("sleepTime", "00:00") ?: "00:00"
-    val savedWakeTime = sharedPref.getString("wakeTime", "00:00") ?: "00:00"
     // track current selected times
-    val mealTime = remember { mutableStateOf(savedMealTime) }
-    val sleepTime = remember { mutableStateOf(savedSleepTime) }
-    val wakeTime = remember { mutableStateOf(savedWakeTime) }
+    val mealTime = remember { mutableStateOf(existingFoodIntake.value?.mealTime ?: "00:00") }
+    val sleepTime = remember { mutableStateOf(existingFoodIntake.value?.sleepTime ?: "00:00") }
+    val wakeTime = remember { mutableStateOf(existingFoodIntake.value?.wakeTime ?: "00:00") }
     var timeError by remember { mutableStateOf(false) }
     // Time selection
     val timeCategories = mapOf(
@@ -125,6 +149,7 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
         "What time of day approx. do you go to sleep at night?" to sleepTime,
         "What time of day approx. do you wake up in the morning?" to wakeTime
     )
+    Log.d("QuestionnairePage", "Meal Time: $mealTime")
 
     Column(
         modifier = modifier.padding(14.dp)
@@ -181,20 +206,46 @@ fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier) {
             onClick = {
                 personaError = selectedPersona.value.isEmpty()
                 timeError = mealTime.value == sleepTime.value || mealTime.value == wakeTime.value || sleepTime.value == wakeTime.value
-
+                Log.d ("QuestionnairePage", "Here1")
+                Log.d("QuestionnairePage", "Selected Foods: $selectedFoods")
                 if (!personaError && !timeError) {
+                    Log.d("QuestionnairePage", "Here2")
                     // save responses to SharedPreferences
-                    saveResponse(
-                        context,
-                        userID,
-                        selectedFoods,
-                        selectedPersona.value,
-                        mealTime.value,
-                        sleepTime.value,
-                        wakeTime.value
-                    )
-                    // navigate to HomePage
-                    context.startActivity(Intent(context, HomePage::class.java))
+                    viewModel.viewModelScope.launch {
+                        Log.d("QuestionnairePage", "Here3")
+                        if (existingFoodIntake.value != null) {
+                            Log.d("QuestionnairePage", "Here4")
+                            viewModel.updateFoodIntake(
+                                id = existingFoodIntake.value!!.id,
+                                patientId = userID,
+                                selectedFoods = selectedFoods,
+                                persona = selectedPersona.value,
+                                mealTime = mealTime.value,
+                                sleepTime = sleepTime.value,
+                                wakeTime = wakeTime.value
+                            )
+                        } else {
+                            Log.d("QuestionnairePage", "Here5")
+                            viewModel.saveFoodIntake(
+                                patientId = userID,
+                                selectedFoods = selectedFoods,
+                                persona = selectedPersona.value,
+                                mealTime = mealTime.value,
+                                sleepTime = sleepTime.value,
+                                wakeTime = wakeTime.value
+                            )
+                            context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE).edit() {
+                                putBoolean(
+                                    "completedResponse",
+                                    true
+                                )
+                            }
+                            Log.d("QuestionnairePage", "Here6")
+                        }
+                        Log.d("QuestionnairePage", "Here7")
+                        // navigate to HomePage
+                        context.startActivity(Intent(context, HomePage::class.java))
+                    }
                 }
             },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
@@ -428,38 +479,4 @@ fun TimePickerFields(timeCategories: Map<String, MutableState<String>>) {
 }
 
 
-/**
- * Save user's responses to SharedPreferences.
- *
- * @param context Context to access SharedPreferences.
- * @param userID Current login user ID.
- * @param selectedFoods List of selected food categories.
- * @param selectedPersona Selected persona.
- * @param mealTime Selected meal time.
- * @param sleepTime Selected sleep time.
- * @param wakeTime Selected wake time.
- */
-fun saveResponse(
-    context: Context,
-    userID: String,
-    selectedFoods: List<String>,
-    selectedPersona: String,
-    mealTime: String,
-    sleepTime: String,
-    wakeTime: String
-) {
-    Log.d("Debug", "Current Logged-in User ID: $userID")
-
-    // save all responses to SharedPreferences
-    val sharedPref = context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE).edit()
-    sharedPref.putBoolean("completedResponse", true)
-    sharedPref.putStringSet("selectedFoods", selectedFoods.toSet())
-    sharedPref.putString("selectedPersona", selectedPersona)
-    sharedPref.putString("mealTime", mealTime)
-    sharedPref.putString("sleepTime", sleepTime)
-    sharedPref.putString("wakeTime", wakeTime)
-    sharedPref.apply()
-
-    Log.d("SharedPreferences", "Data saved to SharedPreferences: $selectedFoods, $selectedPersona, $mealTime, $sleepTime, $wakeTime")
-}
 

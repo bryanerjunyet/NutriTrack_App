@@ -31,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
+import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -56,10 +60,18 @@ class HomePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        val patientViewModel = ViewModelProvider(
+            this, PatientViewModel.PatientViewModelFactory(this)
+        )[PatientViewModel::class.java]
+
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    HomePageScreen(Modifier.padding(innerPadding))
+                    HomePageScreen(
+                        Modifier.padding(innerPadding),
+                        patientViewModel
+                    )
                 }
             }
         }
@@ -73,14 +85,25 @@ class HomePage : ComponentActivity() {
  * @param modifier Modifier to be applied.
  */
 @Composable
-fun HomePageScreen(modifier: Modifier = Modifier) {
+fun HomePageScreen(
+    modifier: Modifier = Modifier,
+    viewModel: PatientViewModel
+) {
     // current context to start activity
     val context = LocalContext.current
     // load current login user ID
-    val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE)
-    val currentUserID = remember { sharedPref.getString("userLoginID", "") ?: "" }
+    val currentUserID = AuthManager.currentUserId ?: return
     // load food score from CSV file
-    val foodScore = remember { loadUserTotalScore(context, currentUserID, "nutritrack_users.csv") }
+    val foodScore = remember { mutableStateOf(0f) }
+
+    LaunchedEffect(currentUserID) {
+        val patient = viewModel.getPatient(currentUserID)
+        foodScore.value = if (patient?.sex == "Male") {
+            patient.heifaTotalScoreMale
+        } else {
+            patient?.heifaTotalScoreFemale ?: 0f
+        }
+    }
 
     Column(
         modifier = modifier.padding(16.dp),
@@ -292,47 +315,4 @@ fun BottomNavigationBar(context: Context) {
     }
 }
 
-
-/**
- * Function to load user total score from CSV file.
- *
- * @param context Context to access assets.
- * @param userID User ID to search.
- * @param fileName Name of the CSV file.
- * @return User's food score.
- */
-fun loadUserTotalScore(context: Context, userID: String, fileName: String): MutableState<Float> {
-    val foodScore = mutableStateOf(0f)
-    val assets = context.assets
-    // open the CSV file and read line by line
-    try {
-        // open CSV file from assets
-        val inputStream = assets.open(fileName)
-        // create reader
-        val reader = BufferedReader(InputStreamReader(inputStream))
-
-        // read the header row to map column names
-        val headerRow = reader.readLine() ?: return foodScore
-        val headers = headerRow.split(",").map { it.trim() }
-        val headerMap = headers.mapIndexed { index, header -> header to index }.toMap()
-
-        reader.useLines { lines ->
-            lines.forEach { line ->
-                val values = line.split(",") // split each line into values
-                // check row matches given user ID
-                if (values.getOrNull(headerMap["User_ID"] ?: -1) == userID) {
-                    val sex = values.getOrNull(headerMap["Sex"] ?: -1)
-                    if (sex == "Male") {
-                        foodScore.value = values.getOrNull(headerMap["HEIFAtotalscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f
-                    } else if (sex == "Female") {
-                        foodScore.value = values.getOrNull(headerMap["HEIFAtotalscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f
-                    }
-                }
-            }
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-    return foodScore
-}
 
