@@ -91,6 +91,7 @@ fun HomePageScreen(
 ) {
     // current context to start activity
     val context = LocalContext.current
+    val currentPage = remember { mutableStateOf("Home") }
     // load current login user ID
     val currentUserID = AuthManager.currentUserId ?: return
     // load food score from CSV file
@@ -212,7 +213,7 @@ fun HomePageScreen(
 
         // Bottom Navigation Bar
         Spacer(modifier = Modifier.weight(1f))
-        BottomNavigationBar(context)
+        BottomNavigationBar(context, currentPage)
     }
 }
 
@@ -223,7 +224,7 @@ fun HomePageScreen(
  *
  * @param context Context to start activities.
  */
-fun BottomNavigationBar(context: Context) {
+fun BottomNavigationBar(context: Context, currentPage: MutableState<String>) {
     Column {
         // Gray line separator
         HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
@@ -239,6 +240,7 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
+                    currentPage.value = "Home"
                     context.startActivity(Intent(context, HomePage::class.java)) // navigate to HomePage
                 }
             ) {
@@ -246,11 +248,12 @@ fun BottomNavigationBar(context: Context) {
                     painter = painterResource(id = R.drawable.home_icon_red),
                     contentDescription = "Home",
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Red
+                    tint = if (currentPage.value == "Home") Color.Red else Color.Gray
                 )
                 Text(
                     text = "Home",
                     fontSize = 12.sp,
+                    color = if (currentPage.value == "Home") Color.Red else Color.Gray,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -259,6 +262,7 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
+                    currentPage.value = "Insights"
                     context.startActivity(Intent(context, InsightsPage::class.java)) // navigate to InsightsPage
                 }
             ) {
@@ -266,11 +270,12 @@ fun BottomNavigationBar(context: Context) {
                     painter = painterResource(id = R.drawable.insights_icon_red),
                     contentDescription = "Insights",
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Red
+                    tint = if (currentPage.value == "Insights") Color.Red else Color.Gray
                 )
                 Text(
                     text = "Insights",
                     fontSize = 12.sp,
+                    color = if (currentPage.value == "Insights") Color.Red else Color.Gray,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -279,18 +284,21 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
-                    // TO BE IMPLEMENTED
+                    currentPage.value = "NutriCoach"
+                    context.startActivity(Intent(context, NutriCoachPage::class.java)) // navigate to
+                // InsightsPage
                 }
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.nutricoach_icon_red),
                     contentDescription = "NutriCoach",
                     modifier = Modifier.size(26.dp),
-                    tint = Color.Red
+                    tint = if (currentPage.value == "NutriCoach") Color.Red else Color.Gray
                 )
                 Text(
                     text = "NutriCoach",
                     fontSize = 12.sp,
+                    color = if (currentPage.value == "NutriCoach") Color.Red else Color.Gray,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
@@ -299,18 +307,21 @@ fun BottomNavigationBar(context: Context) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.clickable {
-                    // TO BE IMPLEMENTED
+                    currentPage.value = "Settings"
+                    context.startActivity(Intent(context, SettingsPage::class.java)) // navigate to
+                // InsightsPage
                 }
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.settings_icon_red),
                     contentDescription = "Settings",
                     modifier = Modifier.size(23.dp),
-                    tint = Color.Red
+                    tint = if (currentPage.value == "Settings") Color.Red else Color.Gray
                 )
                 Text(
                     text = "Settings",
                     fontSize = 12.sp,
+                    color = if (currentPage.value == "Settings") Color.Red else Color.Gray,
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }

@@ -82,6 +82,7 @@ fun InsightsPageScreen(
 ) {
     // current context to start activity
     val context = LocalContext.current
+    val currentPage = remember { mutableStateOf("Insights") }
     // load current login user ID
     val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE)
     val currentUserID = AuthManager.currentUserId ?: return
@@ -251,7 +252,7 @@ fun InsightsPageScreen(
 
         // Bottom Navigation Bar
         Spacer(modifier = Modifier.weight(1f))
-        BottomNavigationBar(context)
+        BottomNavigationBar(context, currentPage)
     }
 }
 
