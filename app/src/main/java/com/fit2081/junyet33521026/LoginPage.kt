@@ -186,7 +186,7 @@ fun LoginScreen(
 
         // Login description
         Text(
-            text = "This app is only for pre-registered users. Please enter the ID and phone number handy before continuing.",
+            text = "This app is only for pre-registered users. Please enter your ID and password or register to claim your account on your first visit.",
             textAlign = TextAlign.Center,
             fontSize = 13.sp
         )

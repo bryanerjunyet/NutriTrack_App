@@ -1,5 +1,6 @@
 package com.fit2081.junyet33521026
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -52,8 +53,14 @@ class MainActivity : ComponentActivity() {
             this, PatientViewModel.PatientViewModelFactory(this)
         )[PatientViewModel::class.java]
 
-        lifecycleScope.launch {
-            patientViewModel.importPatientsFromCsv(this@MainActivity)
+        val sharedPreferences = getSharedPreferences("NutriTrackSetup", Context.MODE_PRIVATE)
+        val databaseSetup = sharedPreferences.getBoolean("completeSetup", false)
+
+        if (!databaseSetup) {
+            lifecycleScope.launch {
+                patientViewModel.importPatientsFromCsv(this@MainActivity)
+                sharedPreferences.edit().putBoolean("completeSetup", true).apply()
+            }
         }
 
         setContent {

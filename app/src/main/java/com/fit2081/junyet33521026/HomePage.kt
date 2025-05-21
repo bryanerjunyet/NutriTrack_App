@@ -95,6 +95,7 @@ fun HomePageScreen(
     val currentUserID = AuthManager.currentUserId ?: return
     // load food score from CSV file
     val foodScore = remember { mutableStateOf(0f) }
+    val patientName = remember { mutableStateOf("") }
 
     LaunchedEffect(currentUserID) {
         val patient = viewModel.getPatient(currentUserID)
@@ -103,6 +104,7 @@ fun HomePageScreen(
         } else {
             patient?.heifaTotalScoreFemale ?: 0f
         }
+        patientName.value = patient.name ?: ""
     }
 
     Column(
@@ -115,7 +117,7 @@ fun HomePageScreen(
             horizontalArrangement = Arrangement.Start
         ) {
             Text(
-                text = "Hello, $currentUserID",
+                text = "Hello, ${patientName.value}",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -165,7 +167,8 @@ fun HomePageScreen(
         // Food Quality Score
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth() // lengthen the card
+            modifier = Modifier
+                .fillMaxWidth() // lengthen the card
                 .background(Color(0xFFE0E0E0), shape = RoundedCornerShape(16.dp)) // light gray background
                 .padding(14.dp) // padding inside the card
         ) {
@@ -187,7 +190,9 @@ fun HomePageScreen(
             Text(
                 text = "See all scores >",
                 fontSize = 14.sp,
-                modifier = Modifier.padding(top = 4.dp).clickable { context.startActivity(Intent(context, InsightsPage::class.java)) } // navigate to InsightsPage
+                modifier = Modifier
+                    .padding(top = 4.dp)
+                    .clickable { context.startActivity(Intent(context, InsightsPage::class.java)) } // navigate to InsightsPage
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -229,7 +234,9 @@ fun BottomNavigationBar(context: Context) {
         Spacer(modifier = Modifier.height(10.dp))
 
         Row(
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             // Home Button

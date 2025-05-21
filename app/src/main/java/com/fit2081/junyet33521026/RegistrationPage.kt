@@ -94,60 +94,6 @@ fun RegistrationScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf("") }
 
-    var registrationValidation by remember { mutableStateOf(false) }
-
-//    // Coroutine validation logic
-//    LaunchedEffect(registrationValidation) {
-//        if (registrationValidation) {
-//            registrationValidation = false
-//            Log.d("Registration", "Validation triggered")
-//
-//            // Step 1: Local validation
-//            if (userInputID.isEmpty()) {
-//                errorMessage = "Please select a User ID"
-//                return@LaunchedEffect
-//            }
-//
-//            if (phoneNumber.isEmpty()) {
-//                errorMessage = "Please enter your phone number"
-//                return@LaunchedEffect
-//            }
-//
-//            if (name.isEmpty()) {
-//                errorMessage = "Name cannot be empty"
-//                return@LaunchedEffect
-//            }
-//
-//            if (password.isEmpty() || confirmPassword.isEmpty()) {
-//                errorMessage = "Password fields cannot be empty"
-//                return@LaunchedEffect
-//            }
-//
-//            if (password != confirmPassword) {
-//                errorMessage = "Passwords do not match"
-//                return@LaunchedEffect
-//            }
-//
-//            // Step 2: Database validation
-//            val isPhoneMatch = viewModel.validateRegistration(userInputID, phoneNumber)
-//            Log.d("Registration", "Phone number match result: $isPhoneMatch")
-//            if (!isPhoneMatch) {
-//                errorMessage = "Phone number does not match with User ID"
-//                return@LaunchedEffect
-//            }
-//
-//            // Step 3: Proceed with registration
-//            Log.d("Registration", "User ID: $userInputID, Phone: $phoneNumber, Name: $name, Password: $password")
-//            val success = viewModel.registerPatient(userInputID, phoneNumber, name, password)
-//            Log.d("Registration", "Registration success: $success")
-//            if (success) {
-//                Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
-//            } else {
-//                errorMessage = "Registration failed. Please check your input."
-//            }
-//        }
-//    }
-
     Column(
         modifier = modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -245,6 +191,14 @@ fun RegistrationScreen(
             )
         }
         Spacer(modifier = Modifier.height(12.dp))
+
+        // Register description
+        Text(
+            text = "This app is only for pre-registered users. Enter your ID, phone number and password to claim your account.",
+            textAlign = TextAlign.Center,
+            fontSize = 13.sp
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
         // Register button
         Button(

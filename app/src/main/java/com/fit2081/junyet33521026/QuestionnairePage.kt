@@ -106,20 +106,10 @@ fun FoodIntakeQuestionnaireScreen(
     // load any saved responses
     val existingFoodIntake = remember { mutableStateOf<FoodIntake?>(null) }
 
-    LaunchedEffect(userID) {
-        existingFoodIntake.value = viewModel.getLatestFoodIntake(userID)
-        Log.d("QuestionnairePage", "Existing Food Intake: ${existingFoodIntake.value}")
-    }
-
     // Food selection
     val foodCategories = listOf("Fruits", "Red Meat", "Fish", "Vegetables", "Seafood", "Eggs", "Grains", "Poultry", "Nuts/Seeds")
-    val selectedFoods = remember {
-        mutableStateListOf<String>().apply {
-            existingFoodIntake.value?.let {
-                addAll(Json.decodeFromString<List<String>>(it.selectedFoods))
-            }
-        }
-    }
+    val selectedFoods = remember { mutableStateListOf<String>() }
+
     Log.d("QuestionnairePage", "Selected Foods: $selectedFoods")
 
     // Persona selection
@@ -133,15 +123,15 @@ fun FoodIntakeQuestionnaireScreen(
     )
     // load any saved persona
     // track current selected persona
-    val selectedPersona = remember { mutableStateOf(existingFoodIntake.value?.persona ?: "") }
+    val selectedPersona = remember { mutableStateOf("") }
     var personaError by remember { mutableStateOf(false) }
     Log.d("QuestionnairePage", "Selected Persona: $selectedPersona")
 
     // load any saved times
     // track current selected times
-    val mealTime = remember { mutableStateOf(existingFoodIntake.value?.mealTime ?: "00:00") }
-    val sleepTime = remember { mutableStateOf(existingFoodIntake.value?.sleepTime ?: "00:00") }
-    val wakeTime = remember { mutableStateOf(existingFoodIntake.value?.wakeTime ?: "00:00") }
+    val mealTime = remember { mutableStateOf("00:00") }
+    val sleepTime = remember { mutableStateOf("00:00") }
+    val wakeTime = remember { mutableStateOf("00:00") }
     var timeError by remember { mutableStateOf(false) }
     // Time selection
     val timeCategories = mapOf(
@@ -150,6 +140,20 @@ fun FoodIntakeQuestionnaireScreen(
         "What time of day approx. do you wake up in the morning?" to wakeTime
     )
     Log.d("QuestionnairePage", "Meal Time: $mealTime")
+
+    LaunchedEffect(userID) {
+        existingFoodIntake.value = viewModel.getLatestFoodIntake(userID)
+        Log.d("QuestionnairePage", "Existing Food Intake: ${existingFoodIntake.value}")
+
+        existingFoodIntake.value?.let {
+            selectedFoods.clear()
+            selectedFoods.addAll(Json.decodeFromString(it.selectedFoods))
+            selectedPersona.value = it.persona
+            mealTime.value = it.mealTime
+            sleepTime.value = it.sleepTime
+            wakeTime.value = it.wakeTime
+        }
+    }
 
     Column(
         modifier = modifier.padding(14.dp)
