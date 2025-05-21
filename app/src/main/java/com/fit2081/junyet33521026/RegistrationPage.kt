@@ -193,12 +193,14 @@ fun RegistrationScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         // Register description
-        Text(
-            text = "This app is only for pre-registered users. Enter your ID, phone number and password to claim your account.",
-            textAlign = TextAlign.Center,
-            fontSize = 13.sp
-        )
-        Spacer(modifier = Modifier.height(16.dp))
+        if (errorMessage.isEmpty()) {
+            Text(
+                text = "This app is only for pre-registered users. Enter your ID, phone number and password to claim your account.",
+                textAlign = TextAlign.Center,
+                fontSize = 13.sp
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Register button
         Button(
