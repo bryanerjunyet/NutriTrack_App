@@ -12,88 +12,43 @@ data class Patient(
     val sex: String,
 
     // Total scores
-    val heifaTotalScoreMale: Float,
-    val heifaTotalScoreFemale: Float,
+    val heifaTotalScore: Float,
 
     // Discretionary
-    val discretionaryHeifaScoreMale: Float,
-    val discretionaryHeifaScoreFemale: Float,
-    val discretionaryServeSize: Float,
+    val discretionaryHeifaScore: Float,
 
     // Vegetables
-    val vegetablesHeifaScoreMale: Float,
-    val vegetablesHeifaScoreFemale: Float,
-    val vegetablesWithLegumesAllocatedServeSize: Float,
-    val legumesAllocatedVegetables: Float,
-    val vegetablesVariationsScore: Float,
-    val vegetablesCruciferous: Float,
-    val vegetablesTuberAndBulb: Float,
-    val vegetablesOther: Float,
-    val legumes: Float,
-    val vegetablesGreen: Float,
-    val vegetablesRedAndOrange: Float,
+    val vegetablesHeifaScore: Float,
 
     // Fruits
-    val fruitHeifaScoreMale: Float,
-    val fruitHeifaScoreFemale: Float,
-    val fruitServeSize: Float,
-    val fruitVariationsScore: Float,
-    val fruitPome: Float,
-    val fruitTropicalAndSubtropical: Float,
-    val fruitBerry: Float,
-    val fruitStone: Float,
-    val fruitCitrus: Float,
-    val fruitOther: Float,
+    val fruitHeifaScore: Float,
 
     // Grains and cereals
-    val grainsAndCerealsHeifaScoreMale: Float,
-    val grainsAndCerealsHeifaScoreFemale: Float,
-    val grainsAndCerealsServeSize: Float,
-    val grainsAndCerealsNonWholegrains: Float,
+    val grainsAndCerealsHeifaScore: Float,
 
     // Whole grains
-    val wholegrainsHeifaScoreMale: Float,
-    val wholegrainsHeifaScoreFemale: Float,
-    val wholegrainsServeSize: Float,
+    val wholegrainsHeifaScore: Float,
 
     // Meat and alternatives
-    val meatAndAlternativesHeifaScoreMale: Float,
-    val meatAndAlternativesHeifaScoreFemale: Float,
-    val meatAndAlternativesWithLegumesAllocatedServeSize: Float,
-    val legumesAllocatedMeatAndAlternatives: Float,
+    val meatAndAlternativesHeifaScore: Float,
 
     // Dairy and alternatives
-    val dairyAndAlternativesHeifaScoreMale: Float,
-    val dairyAndAlternativesHeifaScoreFemale: Float,
-    val dairyAndAlternativesServeSize: Float,
+    val dairyAndAlternativesHeifaScore: Float,
 
     // Sodium
-    val sodiumHeifaScoreMale: Float,
-    val sodiumHeifaScoreFemale: Float,
-    val sodiumMgMilligrams: Float,
+    val sodiumHeifaScore: Float,
 
     // Alcohol
-    val alcoholHeifaScoreMale: Float,
-    val alcoholHeifaScoreFemale: Float,
-    val alcoholStandardDrinks: Float,
+    val alcoholHeifaScore: Float,
 
     // Water
-    val waterHeifaScoreMale: Float,
-    val waterHeifaScoreFemale: Float,
-    val water: Float,
-    val waterTotalMl: Float,
-    val beverageTotalMl: Float,
+    val waterHeifaScore: Float,
 
     // Sugar
-    val sugarHeifaScoreMale: Float,
-    val sugarHeifaScoreFemale: Float,
-    val sugar: Float,
+    val sugarHeifaScore: Float,
 
     // Fats
-    val saturatedFatHeifaScoreMale: Float,
-    val saturatedFatHeifaScoreFemale: Float,
-    val saturatedFat: Float,
-    val unsaturatedFatHeifaScoreMale: Float,
-    val unsaturatedFatHeifaScoreFemale: Float,
-    val unsaturatedFatServeSize: Float
+    val saturatedFatHeifaScore: Float,
+    val unsaturatedFatHeifaScore: Float
+
 )

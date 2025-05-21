@@ -93,33 +93,18 @@ fun InsightsPageScreen(
         patient?.let {
             val scores = mutableListOf<Pair<String, Float>>()
 
-            if (patient.sex == "Male") {
-                scores.add("Total Score" to patient.heifaTotalScoreMale)
-                scores.add("Discretionary" to patient.discretionaryHeifaScoreMale)
-                scores.add("Meat" to patient.meatAndAlternativesHeifaScoreMale)
-                scores.add("Dairy" to patient.dairyAndAlternativesHeifaScoreMale)
-                scores.add("Sugar" to patient.sugarHeifaScoreMale)
-                scores.add("Sodium" to patient.sodiumHeifaScoreMale)
-                scores.add("Grains & Cereal" to (patient.grainsAndCerealsHeifaScoreMale + patient.wholegrainsHeifaScoreMale))
-                scores.add("Vegetables" to patient.vegetablesHeifaScoreMale)
-                scores.add("Fruits" to patient.fruitHeifaScoreMale)
-                scores.add("Alcohol" to patient.alcoholHeifaScoreMale)
-                scores.add("Water" to patient.waterHeifaScoreMale)
-                scores.add("Saturated Fat" to (patient.saturatedFatHeifaScoreMale + patient.unsaturatedFatHeifaScoreMale))
-            } else {
-                scores.add("Total Score" to patient.heifaTotalScoreFemale)
-                scores.add("Discretionary" to patient.discretionaryHeifaScoreFemale)
-                scores.add("Meat" to patient.meatAndAlternativesHeifaScoreFemale)
-                scores.add("Dairy" to patient.dairyAndAlternativesHeifaScoreFemale)
-                scores.add("Sugar" to patient.sugarHeifaScoreFemale)
-                scores.add("Sodium" to patient.sodiumHeifaScoreFemale)
-                scores.add("Grains & Cereal" to (patient.grainsAndCerealsHeifaScoreFemale + patient.wholegrainsHeifaScoreFemale))
-                scores.add("Vegetables" to patient.vegetablesHeifaScoreFemale)
-                scores.add("Fruits" to patient.fruitHeifaScoreFemale)
-                scores.add("Alcohol" to patient.alcoholHeifaScoreFemale)
-                scores.add("Water" to patient.waterHeifaScoreFemale)
-                scores.add("Saturated Fat" to (patient.saturatedFatHeifaScoreFemale + patient.unsaturatedFatHeifaScoreFemale))
-            }
+            scores.add("Total Score" to patient.heifaTotalScore)
+            scores.add("Discretionary" to patient.discretionaryHeifaScore)
+            scores.add("Meat" to patient.meatAndAlternativesHeifaScore)
+            scores.add("Dairy" to patient.dairyAndAlternativesHeifaScore)
+            scores.add("Sugar" to patient.sugarHeifaScore)
+            scores.add("Sodium" to patient.sodiumHeifaScore)
+            scores.add("Grains & Cereal" to (patient.grainsAndCerealsHeifaScore + patient.wholegrainsHeifaScore))
+            scores.add("Vegetables" to patient.vegetablesHeifaScore)
+            scores.add("Fruits" to patient.fruitHeifaScore)
+            scores.add("Alcohol" to patient.alcoholHeifaScore)
+            scores.add("Water" to patient.waterHeifaScore)
+            scores.add("Saturated Fat" to (patient.saturatedFatHeifaScore + patient.unsaturatedFatHeifaScore))
 
             foodScores.value = scores
         }
@@ -307,87 +292,4 @@ fun InsightsBar(category: String, score: Float, fullScore: Int) {
             modifier = Modifier.weight(0.1f)
         )
     }
-}
-
-/**
- * Function to load user individual food scores from a CSV file.
- *
- * @param context Context of access assets.
- * @param userID User ID to search.
- * @param fileName Name of the CSV file.
- * @return A list of pairs of food name and score.
- */
-fun loadUserFoodScores(context: Context, userID: String, fileName: String): List<Pair<String, Float>> {
-    val foodScores = mutableStateListOf<Pair<String, Float>>()
-    val assets = context.assets
-    // open the CSV file and read line by line
-    try {
-        // open CSV file from assets
-        val inputStream = assets.open(fileName)
-        // create reader
-        val reader = BufferedReader(InputStreamReader(inputStream))
-
-        // read the header row to map column names
-        val headerRow = reader.readLine() ?: return emptyList()
-        val headers = headerRow.split(",").map { it.trim() }
-        val headerMap = headers.mapIndexed { index, header -> header to index }.toMap()
-
-        // read data rows
-        reader.useLines { lines ->
-            lines.forEach { line ->
-                val values = line.split(",").map { it.trim() }
-
-                // check given user ID
-                if (values.getOrNull(headerMap["User_ID"] ?: -1) == userID) {
-                    val sex = values.getOrNull(headerMap["Sex"] ?: -1)
-                    if (sex == "Male") { // obtain food score in terms of male
-                        foodScores.add("Total Score" to (values.getOrNull(headerMap["HEIFAtotalscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        // first 6 items having full score of 10
-                        foodScores.add("Discretionary" to (values.getOrNull(headerMap["DiscretionaryHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Meat" to (values.getOrNull(headerMap["MeatandalternativesHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Dairy" to (values.getOrNull(headerMap["DairyandalternativesHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Sugar" to (values.getOrNull(headerMap["SugarHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Sodium" to (values.getOrNull(headerMap["SodiumHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Grains & Cereal" to (
-                                (values.getOrNull(headerMap["GrainsandcerealsHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f) +
-                                        (values.getOrNull(headerMap["WholegrainsHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f)
-                                ))
-                        // the rest having full score of 5
-                        foodScores.add("Vegetables" to (values.getOrNull(headerMap["VegetablesHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Fruits" to (values.getOrNull(headerMap["FruitHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Alcohol" to (values.getOrNull(headerMap["AlcoholHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Water" to (values.getOrNull(headerMap["WaterHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Saturated Fat" to (
-                                (values.getOrNull(headerMap["SaturatedFatHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f) +
-                                        (values.getOrNull(headerMap["UnsaturatedFatHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f)
-                                ))
-                    } else if (sex == "Female") { // obtain food score in terms of female
-                        foodScores.add("Total Score" to (values.getOrNull(headerMap["HEIFAtotalscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        // first 6 items having full score of 10
-                        foodScores.add("Discretionary" to (values.getOrNull(headerMap["DiscretionaryHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Meat" to (values.getOrNull(headerMap["MeatandalternativesHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Dairy" to (values.getOrNull(headerMap["DairyandalternativesHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Sugar" to (values.getOrNull(headerMap["SugarHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Sodium" to (values.getOrNull(headerMap["SodiumHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Grains & Cereal" to (
-                                (values.getOrNull(headerMap["GrainsandcerealsHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f) +
-                                        (values.getOrNull(headerMap["WholegrainsHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f)
-                                ))
-                        // the rest having full score of 5
-                        foodScores.add("Vegetables" to (values.getOrNull(headerMap["VegetablesHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Fruits" to (values.getOrNull(headerMap["FruitHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Alcohol" to (values.getOrNull(headerMap["AlcoholHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Water" to (values.getOrNull(headerMap["WaterHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f))
-                        foodScores.add("Saturated Fat" to (
-                                (values.getOrNull(headerMap["SaturatedFatHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f) +
-                                        (values.getOrNull(headerMap["UnsaturatedFatHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f)
-                                ))
-                    }
-                }
-            }
-        }
-    } catch (e: Exception) {
-        e.printStackTrace()
-    }
-    return foodScores
 }

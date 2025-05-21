@@ -99,11 +99,7 @@ fun HomePageScreen(
 
     LaunchedEffect(currentUserID) {
         val patient = viewModel.getPatient(currentUserID)
-        foodScore.value = if (patient?.sex == "Male") {
-            patient.heifaTotalScoreMale
-        } else {
-            patient?.heifaTotalScoreFemale ?: 0f
-        }
+        foodScore.value = patient.heifaTotalScore
         patientName.value = patient.name ?: ""
     }
 
