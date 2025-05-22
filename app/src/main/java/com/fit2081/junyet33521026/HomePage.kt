@@ -10,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -106,6 +107,7 @@ fun HomePageScreen(
 
     Column(
         modifier = modifier.padding(16.dp),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Greeting message
@@ -136,7 +138,12 @@ fun HomePageScreen(
             // Edit button
             Button(
                 onClick = {
-                    context.startActivity(Intent(context, QuestionnairePage::class.java)) // navigate to QuestionnairePage
+                    context.startActivity(
+                        Intent(
+                            context,
+                            QuestionnairePage::class.java
+                        )
+                    ) // navigate to QuestionnairePage
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 shape = RoundedCornerShape(6.dp),
@@ -166,7 +173,10 @@ fun HomePageScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth() // lengthen the card
-                .background(Color(0xFFE0E0E0), shape = RoundedCornerShape(16.dp)) // light gray background
+                .background(
+                    Color(0xFFE0E0E0),
+                    shape = RoundedCornerShape(16.dp)
+                ) // light gray background
                 .padding(14.dp) // padding inside the card
         ) {
             Text(
@@ -189,7 +199,14 @@ fun HomePageScreen(
                 fontSize = 14.sp,
                 modifier = Modifier
                     .padding(top = 4.dp)
-                    .clickable { context.startActivity(Intent(context, InsightsPage::class.java)) } // navigate to InsightsPage
+                    .clickable {
+                        context.startActivity(
+                            Intent(
+                                context,
+                                InsightsPage::class.java
+                            )
+                        )
+                    } // navigate to InsightsPage
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
@@ -210,11 +227,13 @@ fun HomePageScreen(
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 8.dp)
         )
+    }
 
-        // Bottom Navigation Bar
+    Column {
         Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
     }
+
 }
 
 
@@ -225,7 +244,9 @@ fun HomePageScreen(
  * @param context Context to start activities.
  */
 fun BottomNavigationBar(context: Context, currentPage: MutableState<String>) {
-    Column {
+    Column (modifier = Modifier
+        .fillMaxWidth()
+        .background(Color.White)) {
         // Gray line separator
         HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
         Spacer(modifier = Modifier.height(10.dp))
@@ -247,7 +268,7 @@ fun BottomNavigationBar(context: Context, currentPage: MutableState<String>) {
                 Icon(
                     painter = painterResource(id = R.drawable.home_icon_red),
                     contentDescription = "Home",
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(26.dp),
                     tint = if (currentPage.value == "Home") Color.Red else Color.Gray
                 )
                 Text(
@@ -269,7 +290,7 @@ fun BottomNavigationBar(context: Context, currentPage: MutableState<String>) {
                 Icon(
                     painter = painterResource(id = R.drawable.insights_icon_red),
                     contentDescription = "Insights",
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(26.dp),
                     tint = if (currentPage.value == "Insights") Color.Red else Color.Gray
                 )
                 Text(
@@ -315,7 +336,7 @@ fun BottomNavigationBar(context: Context, currentPage: MutableState<String>) {
                 Icon(
                     painter = painterResource(id = R.drawable.settings_icon_red),
                     contentDescription = "Settings",
-                    modifier = Modifier.size(23.dp),
+                    modifier = Modifier.size(25.dp),
                     tint = if (currentPage.value == "Settings") Color.Red else Color.Gray
                 )
                 Text(
@@ -325,8 +346,12 @@ fun BottomNavigationBar(context: Context, currentPage: MutableState<String>) {
                     modifier = Modifier.padding(top = 4.dp)
                 )
             }
+
         }
+        Spacer(modifier = Modifier.height(30.dp))
+
     }
+
 }
 
 

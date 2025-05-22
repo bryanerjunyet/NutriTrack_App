@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +26,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -34,6 +35,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fit2081.junyet33521026.data.ClinicianUiState
+import com.fit2081.junyet33521026.data.ClinicianViewModel
+import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 
 /**
@@ -53,8 +63,7 @@ class ClinicianPage : ComponentActivity() {
                     if (isLoggedIn.value) {
                         // Show dashboard when logged in
                         ClinicianDashboardScreen(
-                            modifier = Modifier.padding(innerPadding),
-                            onBackClick = { isLoggedIn.value = false }
+                            modifier = Modifier.padding(innerPadding)
                         )
                     } else {
                         // Show login screen when not logged in
@@ -181,10 +190,10 @@ fun ClinicianLoginScreen(
             )
         }
 
-        // Spacer to push bottom navigation bar to bottom
-        Spacer(modifier = Modifier.weight(1f))
+    }
 
-        // Bottom Navigation Bar
+    Column {
+        Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
     }
 }
@@ -196,61 +205,205 @@ fun ClinicianLoginScreen(
  * @param onBackClick Callback for back button click.
  */
 @Composable
-fun ClinicianDashboardScreen(
-    modifier: Modifier = Modifier,
-    onBackClick: () -> Unit
-) {
+fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val currentPage = remember { mutableStateOf("Settings") }
+
+    // Get ViewModel instances
+    val patientViewModel: PatientViewModel = viewModel(
+        factory = PatientViewModel.PatientViewModelFactory(context)
+    )
+    val clinicianViewModel: ClinicianViewModel = viewModel(
+        factory = ClinicianViewModel.ClinicianViewModelFactory(context)
+    )
+
+    // Collect UI state
+    val clinicianUiState by clinicianViewModel.uiState.collectAsState()
+
+    // Collect average HEIFA scores
+    val maleAverageHeifa by clinicianViewModel.maleAverageHeifa.collectAsState(initial = 0.0f)
+    val femaleAverageHeifa by clinicianViewModel.femaleAverageHeifa.collectAsState(initial = 0.0f)
+
+    // Initialize ViewModel data
+    LaunchedEffect(key1 = true) {
+        clinicianViewModel.calculateAverageScores()
+    }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Title
         Text(
             text = "Clinician Dashboard",
             textAlign = TextAlign.Center,
-            fontSize = 24.sp,
+            fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 32.dp)
+                .padding(bottom = 16.dp)
         )
 
-        // Dashboard content placeholder
-        Text(
-            text = "Welcome to the Clinician Dashboard",
-            fontSize = 18.sp,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(16.dp)
+        // HEIFA Average Score boxes
+        HeifaScoreBox(
+            title = "Average HEIFA (Male)",
+            score = String.format("%.1f", maleAverageHeifa)
         )
 
-        // Back button
+        Spacer(modifier = Modifier.height(8.dp))
+
+        HeifaScoreBox(
+            title = "Average HEIFA (Female)",
+            score = String.format("%.1f", femaleAverageHeifa)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Find Data Pattern Button
         Button(
-            onClick = onBackClick,
+            onClick = { clinicianViewModel.analyzeData() },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(50.dp)
-                .padding(top = 24.dp),
+                .height(48.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Red
             ),
             shape = RoundedCornerShape(8.dp)
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = R.drawable.search_icon),
+                    contentDescription = "Search Icon",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Find Data Pattern",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // AI Analysis Results
+        when (clinicianUiState) {
+            is ClinicianUiState.Initial -> {
+                // Nothing to show yet
+            }
+
+            is ClinicianUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .align(Alignment.CenterHorizontally),
+                    color = Color.Red
+                )
+            }
+
+            is ClinicianUiState.Success -> {
+                val insights = (clinicianUiState as ClinicianUiState.Success).insights
+                insights.forEach { insight ->
+                    InsightCard(title = insight.title, description = insight.description)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
+            is ClinicianUiState.Error -> {
+                Text(
+                    text = "Error: ${(clinicianUiState as ClinicianUiState.Error).errorMessage}",
+                    color = Color.Red,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(100.dp))
+    }
+
+    Column {
+        Spacer(modifier = Modifier.weight(1f))
+        BottomNavigationBar(context, currentPage)
+    }
+
+
+}
+
+@Composable
+fun HeifaScoreBox(
+    title: String,
+    score: String
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "Back to Settings",
+                text = "$title:",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
+            Spacer(modifier = Modifier.weight(1f))
+            Text(
+                text = score,
+                fontSize = 16.sp
+            )
         }
+    }
+}
 
-        // Spacer to push bottom navigation bar to bottom
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Bottom Navigation Bar
-        BottomNavigationBar(context, currentPage)
+@Composable
+fun InsightCard(
+    title: String,
+    description: String
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = title,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = description,
+                fontSize = 14.sp
+            )
+        }
     }
 }

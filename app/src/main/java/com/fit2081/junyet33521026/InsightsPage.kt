@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -117,7 +118,7 @@ fun InsightsPageScreen(
         val totalScore = foodScores.value.firstOrNull()?.second?.toInt() ?: 0
 
         // Insights title
-        Row (
+        Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
@@ -145,7 +146,10 @@ fun InsightsPageScreen(
         Column(
             modifier = Modifier
                 .fillMaxWidth() // lengthen the card
-                .background(Color(0xFFF0F0F0), shape = RoundedCornerShape(16.dp)) // light gray background
+                .background(
+                    Color(0xFFF0F0F0),
+                    shape = RoundedCornerShape(16.dp)
+                ) // light gray background
                 .padding(16.dp), // padding inside the card
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -166,10 +170,10 @@ fun InsightsPageScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             // Progress bar
-            Row (
+            Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
-            ){
+            ) {
                 LinearProgressIndicator(
                     progress = { (totalScore.toFloat() / 100) },
                     modifier = Modifier
@@ -193,7 +197,7 @@ fun InsightsPageScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Share button
-            Row (modifier = Modifier.fillMaxWidth(0.6f)) {
+            Row(modifier = Modifier.fillMaxWidth(0.6f)) {
                 Button(
                     onClick = {
                         val shareIntent = Intent(Intent.ACTION_SEND)
@@ -212,7 +216,12 @@ fun InsightsPageScreen(
                         insightsText.append("\n\nShared from NutriTrack App")
 
                         shareIntent.putExtra(Intent.EXTRA_TEXT, insightsText.toString())
-                        context.startActivity(Intent.createChooser(shareIntent, "Share your food insights via"))
+                        context.startActivity(
+                            Intent.createChooser(
+                                shareIntent,
+                                "Share your food insights via"
+                            )
+                        )
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                     modifier = Modifier.weight(0.5f)
@@ -224,14 +233,18 @@ fun InsightsPageScreen(
                             modifier = Modifier.size(21.dp),
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text(text = "Share with friends", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Share with friends",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
 
             // Improve my diet button
-            Row (modifier = Modifier.fillMaxWidth(0.6f)) {
+            Row(modifier = Modifier.fillMaxWidth(0.6f)) {
                 Button(
                     onClick = { /* TO BE IMPLEMENTED */ },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
@@ -244,16 +257,23 @@ fun InsightsPageScreen(
                             modifier = Modifier.size(23.dp),
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text(text = "Improve my diet", fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Improve my diet",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
             }
         }
 
-        // Bottom Navigation Bar
+    }
+
+    Column {
         Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
     }
+
 }
 
 @Composable

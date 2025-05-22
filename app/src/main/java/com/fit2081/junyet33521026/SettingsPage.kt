@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -172,7 +173,7 @@ fun SettingsPageScreen(
             Icon(
                 painter = painterResource(id = R.drawable.id_icon),
                 contentDescription = "ID",
-                modifier = Modifier.size(27.dp),
+                modifier = Modifier.size(25.dp),
                 tint = Color.Red
             )
             Text(
@@ -207,7 +208,8 @@ fun SettingsPageScreen(
                     // Logout user and navigate to login page
                     AuthManager.logout()
                     val intent = Intent(context, LoginPage::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                    intent.flags =
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     context.startActivity(intent)
                 }
                 .padding(vertical = 16.dp),
@@ -266,10 +268,11 @@ fun SettingsPageScreen(
             )
         }
 
-        // Spacer to push bottom navigation bar to bottom
-        Spacer(modifier = Modifier.weight(1f))
+    }
 
-        // Bottom Navigation Bar
+
+    Column {
+        Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
     }
 
