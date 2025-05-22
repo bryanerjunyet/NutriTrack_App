@@ -4,25 +4,19 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.fit2081.junyet33521026.data.NutriTrackDatabase
-import com.fit2081.junyet33521026.data.Patient
-import com.fit2081.junyet33521026.data.PatientDao
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.content
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * ViewModel for the Clinician Dashboard
+ * ViewModel for GenAI
  */
-class ClinicianViewModel(context: Context) : ViewModel() {
+class AIViewModel(context: Context) : ViewModel() {
     private val patientDao: PatientDao = NutriTrackDatabase.getDatabase(context).patientDao()
 
     // API key for Gemini AI
@@ -35,9 +29,9 @@ class ClinicianViewModel(context: Context) : ViewModel() {
     )
 
     // UI state for the dashboard
-    private val _uiState: MutableStateFlow<ClinicianUiState> =
-        MutableStateFlow(ClinicianUiState.Initial)
-    val uiState: StateFlow<ClinicianUiState> = _uiState.asStateFlow()
+    private val _uiState: MutableStateFlow<UIState> =
+        MutableStateFlow(UIState.Initial)
+    val uiState: StateFlow<UIState> = _uiState.asStateFlow()
 
     // Average HEIFA scores by gender
     private val _maleAverageHeifa = MutableStateFlow(0.0f)
@@ -69,7 +63,7 @@ class ClinicianViewModel(context: Context) : ViewModel() {
                 }
             } catch (e: Exception) {
                 // Handle error
-                _uiState.value = ClinicianUiState.Error("Error calculating averages: ${e.message}")
+                _uiState.value = UIState.Error("Error calculating averages: ${e.message}")
             }
         }
     }
@@ -78,7 +72,7 @@ class ClinicianViewModel(context: Context) : ViewModel() {
      * Analyze patient data using Gemini AI
      */
     fun analyzeData() {
-        _uiState.value = ClinicianUiState.Loading
+        _uiState.value = UIState.Loading
 
         viewModelScope.launch {
             try {
@@ -99,10 +93,10 @@ class ClinicianViewModel(context: Context) : ViewModel() {
 
                 // Compile insights
                 val insights = listOf(topScoresInsight, waterInsight, genderInsight)
-                _uiState.value = ClinicianUiState.Success(insights)
+                _uiState.value = UIState.Success(insights)
 
             } catch (e: Exception) {
-                _uiState.value = ClinicianUiState.Error("Error analyzing data: ${e.message}")
+                _uiState.value = UIState.Error("Error analyzing data: ${e.message}")
             }
         }
     }
@@ -204,9 +198,9 @@ class ClinicianViewModel(context: Context) : ViewModel() {
     /**
      * Factory for creating ClinicianViewModel instances
      */
-    class ClinicianViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+    class AIViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ClinicianViewModel(context.applicationContext) as T
+            return AIViewModel(context.applicationContext) as T
         }
     }
 }

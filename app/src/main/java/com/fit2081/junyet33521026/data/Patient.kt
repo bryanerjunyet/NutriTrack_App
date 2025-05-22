@@ -22,6 +22,8 @@ data class Patient(
 
     // Fruits
     val fruitHeifaScore: Float,
+    val fruitSizeScore: Float,
+    val fruitVariationsScore: Float,
 
     // Grains and cereals
     val grainsAndCerealsHeifaScore: Float,

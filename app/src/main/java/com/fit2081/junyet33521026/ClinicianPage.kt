@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -22,7 +21,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,8 +39,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fit2081.junyet33521026.data.ClinicianUiState
-import com.fit2081.junyet33521026.data.ClinicianViewModel
+import com.fit2081.junyet33521026.data.UIState
+import com.fit2081.junyet33521026.data.AIViewModel
 import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 
@@ -213,20 +211,20 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
     val patientViewModel: PatientViewModel = viewModel(
         factory = PatientViewModel.PatientViewModelFactory(context)
     )
-    val clinicianViewModel: ClinicianViewModel = viewModel(
-        factory = ClinicianViewModel.ClinicianViewModelFactory(context)
+    val AIViewModel: AIViewModel = viewModel(
+        factory = AIViewModel.AIViewModelFactory(context)
     )
 
     // Collect UI state
-    val clinicianUiState by clinicianViewModel.uiState.collectAsState()
+    val clinicianUiState by AIViewModel.uiState.collectAsState()
 
     // Collect average HEIFA scores
-    val maleAverageHeifa by clinicianViewModel.maleAverageHeifa.collectAsState(initial = 0.0f)
-    val femaleAverageHeifa by clinicianViewModel.femaleAverageHeifa.collectAsState(initial = 0.0f)
+    val maleAverageHeifa by AIViewModel.maleAverageHeifa.collectAsState(initial = 0.0f)
+    val femaleAverageHeifa by AIViewModel.femaleAverageHeifa.collectAsState(initial = 0.0f)
 
     // Initialize ViewModel data
     LaunchedEffect(key1 = true) {
-        clinicianViewModel.calculateAverageScores()
+        AIViewModel.calculateAverageScores()
     }
 
     Column(
@@ -265,7 +263,7 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
 
         // Find Data Pattern Button
         Button(
-            onClick = { clinicianViewModel.analyzeData() },
+            onClick = { AIViewModel.analyzeData() },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp),
@@ -298,11 +296,11 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
 
         // AI Analysis Results
         when (clinicianUiState) {
-            is ClinicianUiState.Initial -> {
+            is UIState.Initial -> {
                 // Nothing to show yet
             }
 
-            is ClinicianUiState.Loading -> {
+            is UIState.Loading -> {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(16.dp)
@@ -311,17 +309,17 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
                 )
             }
 
-            is ClinicianUiState.Success -> {
-                val insights = (clinicianUiState as ClinicianUiState.Success).insights
+            is UIState.Success -> {
+                val insights = (clinicianUiState as UIState.Success).insights
                 insights.forEach { insight ->
                     InsightCard(title = insight.title, description = insight.description)
                     Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
-            is ClinicianUiState.Error -> {
+            is UIState.Error -> {
                 Text(
-                    text = "Error: ${(clinicianUiState as ClinicianUiState.Error).errorMessage}",
+                    text = "Error: ${(clinicianUiState as UIState.Error).errorMessage}",
                     color = Color.Red,
                     modifier = Modifier.padding(16.dp)
                 )
