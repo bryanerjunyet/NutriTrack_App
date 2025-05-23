@@ -39,6 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -158,21 +159,22 @@ fun LoginScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Phone number
+        // Password
         OutlinedTextField(
-            value = passwordInput, // current phone number
+            value = passwordInput,
             onValueChange = {
-                // phone number input
                 passwordInput = it
             },
             label = { Text("Enter Password") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             isError = passwordError,
-            modifier = Modifier.fillMaxWidth()
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Phone number validation
+        // Password validation
         if (passwordError) {
             // Error message
             Text(
@@ -212,13 +214,13 @@ fun LoginScreen(
         ) {
             Text("Continue", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         // Register button
         Button(
             onClick = { context.startActivity(Intent(context, RegistrationPage::class.java)) },
             modifier = Modifier.fillMaxWidth(0.5f),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
         ) {
             Text("Register", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }

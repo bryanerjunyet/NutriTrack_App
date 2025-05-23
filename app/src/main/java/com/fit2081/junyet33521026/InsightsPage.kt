@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -123,7 +125,7 @@ fun InsightsPageScreen(
             horizontalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Insights: Food Score",
+                text = "Your Insights",
                 fontSize = 30.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -193,7 +195,7 @@ fun InsightsPageScreen(
 
         // Action Buttons
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Share button
@@ -246,7 +248,12 @@ fun InsightsPageScreen(
             // Improve my diet button
             Row(modifier = Modifier.fillMaxWidth(0.6f)) {
                 Button(
-                    onClick = { /* TO BE IMPLEMENTED */ },
+                    onClick = { context.startActivity(
+                        Intent(
+                            context,
+                            NutriCoachPage::class.java
+                        )
+                    ) },
                     colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
                     modifier = Modifier.weight(0.5f)
                 ) {

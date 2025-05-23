@@ -38,6 +38,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fit2081.junyet33521026.data.UIState
 import com.fit2081.junyet33521026.data.AIViewModel
@@ -132,6 +133,7 @@ fun ClinicianLoginScreen(
                 .padding(vertical = 8.dp),
             shape = RoundedCornerShape(8.dp),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            visualTransformation = PasswordVisualTransformation(),
             singleLine = true
         )
 
@@ -265,7 +267,7 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
         Button(
             onClick = { AIViewModel.analyzeData() },
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(0.6f)
                 .height(48.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Red
@@ -309,8 +311,8 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
                 )
             }
 
-            is UIState.Success -> {
-                val insights = (clinicianUiState as UIState.Success).insights
+            is UIState.ClinicianSuccess -> {
+                val insights = (clinicianUiState as UIState.ClinicianSuccess).insights
                 insights.forEach { insight ->
                     InsightCard(title = insight.title, description = insight.description)
                     Spacer(modifier = Modifier.height(8.dp))
@@ -323,6 +325,10 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
                     color = Color.Red,
                     modifier = Modifier.padding(16.dp)
                 )
+            }
+
+            is UIState.NutriCoachSuccess -> {
+                // Nothing to show
             }
         }
 

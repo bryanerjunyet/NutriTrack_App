@@ -21,7 +21,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
@@ -106,7 +108,7 @@ fun HomePageScreen(
     }
 
     Column(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier.padding(16.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -177,7 +179,7 @@ fun HomePageScreen(
                     Color(0xFFE0E0E0),
                     shape = RoundedCornerShape(16.dp)
                 ) // light gray background
-                .padding(14.dp) // padding inside the card
+                .padding(14.dp), // padding inside the card
         ) {
             Text(
                 text = "Your Food Quality Score",

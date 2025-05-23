@@ -16,9 +16,14 @@ sealed interface UIState {
     object Loading : UIState
 
     /**
-     * Analysis has completed successfully
+     * Analysis has completed successfully for Clinician Insights
      */
-    data class Success(val insights: List<ClinicianInsight>) : UIState
+    data class ClinicianSuccess(val insights: List<ClinicianInsight>) : UIState
+
+    /**
+     * Motivational message generated successfully for NutriCoach
+     */
+    data class NutriCoachSuccess(val message: String) : UIState
 
     /**
      * There was an error during analysis

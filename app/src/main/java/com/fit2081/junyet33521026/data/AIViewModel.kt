@@ -1,6 +1,7 @@
 package com.fit2081.junyet33521026.data
 
 import android.content.Context
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,6 +19,8 @@ import kotlinx.coroutines.withContext
  */
 class AIViewModel(context: Context) : ViewModel() {
     private val patientDao: PatientDao = NutriTrackDatabase.getDatabase(context).patientDao()
+    private val foodIntakeDao: FoodIntakeDao = NutriTrackDatabase.getDatabase(context).foodIntakeDao()
+
 
     // API key for Gemini AI
     private val apiKey = "AIzaSyCro30xkTe0iSXe7vgIMjvCMMQ1SFz1gm8"
@@ -93,12 +96,92 @@ class AIViewModel(context: Context) : ViewModel() {
 
                 // Compile insights
                 val insights = listOf(topScoresInsight, waterInsight, genderInsight)
-                _uiState.value = UIState.Success(insights)
+                _uiState.value = UIState.ClinicianSuccess(insights)
 
             } catch (e: Exception) {
                 _uiState.value = UIState.Error("Error analyzing data: ${e.message}")
             }
         }
+    }
+
+
+    /**
+     * Generate motivational message for NutriCoach
+     */
+    fun generateMotivationalMessage(patientId: String) {
+        _uiState.value = UIState.Loading
+
+        viewModelScope.launch {
+            try {
+                // Get patient data
+                val patient = withContext(Dispatchers.IO) {
+                    patientDao.getPatient(patientId)
+                }
+
+                // Get latest food intake
+                val latestFoodIntake = withContext(Dispatchers.IO) {
+                    foodIntakeDao.getLatestFoodIntake(patientId)
+                }
+
+                // Create prompt for motivational message
+                val motivationalPrompt = createMotivationalPrompt(patient, latestFoodIntake)
+
+                // Generate AI response
+                val response = generativeModel.generateContent(
+                    content {
+                        text(motivationalPrompt)
+                    }
+                )
+
+                val message = response.text?.trim() ?: "Keep up the great work with your nutrition journey!"
+                _uiState.value = UIState.NutriCoachSuccess(message)
+
+            } catch (e: Exception) {
+                Log.e("AIViewModel", "Error generating motivational message", e)
+                _uiState.value = UIState.Error("Error generating message: ${e.message}")
+            }
+        }
+    }
+
+
+    /**
+     * Create motivational prompt based on patient data
+     */
+    private fun createMotivationalPrompt(patient: Patient, foodIntake: FoodIntake?): String {
+        val foodIntakeInfo = if (foodIntake != null) {
+            "Recent food intake: ${foodIntake.selectedFoods}, Persona: ${foodIntake.persona}, Meal time: ${foodIntake.mealTime}"
+        } else {
+            "No recent food intake data available"
+        }
+
+        return """
+            Generate a motivational message or fun food tip for a patient with the following nutrition data:
+            
+            Name: ${patient.name}
+            Sex: ${patient.sex}
+            Total HEIFA Score: ${patient.heifaTotalScore}
+            
+            Detailed Scores:
+            - Vegetables: ${patient.vegetablesHeifaScore}
+            - Fruits: ${patient.fruitHeifaScore}
+            - Fruit Size Score: ${patient.fruitSizeScore}
+            - Fruit Variations Score: ${patient.fruitVariationsScore}
+            - Grains and Cereals: ${patient.grainsAndCerealsHeifaScore}
+            - Whole Grains: ${patient.wholegrainsHeifaScore}
+            - Meat and Alternatives: ${patient.meatAndAlternativesHeifaScore}
+            - Dairy and Alternatives: ${patient.dairyAndAlternativesHeifaScore}
+            - Sodium: ${patient.sodiumHeifaScore}
+            - Alcohol: ${patient.alcoholHeifaScore}
+            - Water: ${patient.waterHeifaScore}
+            - Sugar: ${patient.sugarHeifaScore}
+            - Saturated Fat: ${patient.saturatedFatHeifaScore}
+            - Unsaturated Fat: ${patient.unsaturatedFatHeifaScore}
+            
+            $foodIntakeInfo
+            
+            Based on this data, generate a personalized, encouraging, and actionable motivational message or fun food tip in 2-3 sentences. 
+            Focus on their strengths and provide gentle suggestions for improvement. Make it positive and engaging.
+        """.trimIndent()
     }
 
     /**
@@ -193,6 +276,13 @@ class AIViewModel(context: Context) : ViewModel() {
             Analyze how male and female food diet patterns vary in 2-3 sentences.
             Focus on differences in food category preferences and overall dietary patterns between genders.
         """.trimIndent()
+    }
+
+    /**
+     * Reset UI state to initial
+     */
+    fun resetState() {
+        _uiState.value = UIState.Initial
     }
 
     /**
