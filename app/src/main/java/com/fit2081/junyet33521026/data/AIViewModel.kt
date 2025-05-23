@@ -74,7 +74,7 @@ class AIViewModel(context: Context) : ViewModel() {
      * Analyze patient data using Gemini AI
      */
     fun analyzeData() {
-        _uiState.value = UIState.Loading
+        _uiState.value = UIState.ClinicianLoading
 
         viewModelScope.launch {
             try {
@@ -108,7 +108,7 @@ class AIViewModel(context: Context) : ViewModel() {
      * Generate motivational message for NutriCoach
      */
     fun generateMotivationalMessage(patientId: String) {
-        _uiState.value = UIState.Loading
+        _uiState.value = UIState.NutriCoachLoading
 
         viewModelScope.launch {
             try {
@@ -142,6 +142,104 @@ class AIViewModel(context: Context) : ViewModel() {
         }
     }
 
+    /**
+     * Generate AI response for custom nutrition questions
+     */
+    fun generateCustomNutritionResponse(patientId: String, userQuestion: String) {
+        _uiState.value = UIState.AIChatLoading
+
+        viewModelScope.launch {
+            try {
+                // Get comprehensive patient data
+                val patient = withContext(Dispatchers.IO) {
+                    patientDao.getPatient(patientId)
+                }
+
+                // Get all food intake data for the patient
+                val foodIntakes = withContext(Dispatchers.IO) {
+                    foodIntakeDao.getFoodIntakesForPatient(patientId)
+                }
+
+                // Create comprehensive prompt for AI bot
+                val aiChatPrompt = processText(createAIChatPrompt(patient, foodIntakes, userQuestion))
+
+                // Generate AI response
+                val response = generativeModel.generateContent(
+                    content {
+                        text(aiChatPrompt)
+                    }
+                )
+
+                val message = response.text?.trim() ?: "I'm sorry, I couldn't generate a response to your question. Please try rephrasing your question."
+                _uiState.value = UIState.AIChatSuccess(message)
+
+            } catch (e: Exception) {
+                Log.e("AIViewModel", "Error generating AI chat response", e)
+                _uiState.value = UIState.Error("Error generating response: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * Create comprehensive AI chat prompt with all patient data
+     */
+    private fun createAIChatPrompt(patient: Patient, foodIntakes: List<FoodIntake>, userQuestion: String): String {
+        // Compile food intake history
+        val foodIntakeHistory = if (foodIntakes.isNotEmpty()) {
+            foodIntakes.takeLast(10).joinToString("\n") { intake ->
+                "Date: ${java.text.SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault()).format(java.util.Date(intake.timestamp))}, " +
+                        "Foods: ${intake.selectedFoods}, Persona: ${intake.persona}, Meal Time: ${intake.mealTime}, " +
+                        "Sleep Time: ${intake.sleepTime}, Wake Time: ${intake.wakeTime}"
+            }
+        } else {
+            "No food intake data available"
+        }
+
+        return """
+        You are a professional nutrition AI assistant with access to comprehensive patient data. 
+        Please provide a detailed, informative response (minimum 5 sentences) to the user's question.
+        
+        PATIENT PROFILE:
+        Name: ${patient.name}
+        Sex: ${patient.sex}
+        Total HEIFA Score: ${patient.heifaTotalScore}
+        
+        DETAILED NUTRITION SCORES:
+        - Vegetables: ${patient.vegetablesHeifaScore}/10
+        - Fruits: ${patient.fruitHeifaScore}/10 
+        - Grains and Cereals: ${patient.grainsAndCerealsHeifaScore}/5
+        - Whole Grains: ${patient.wholegrainsHeifaScore}/5
+        - Meat and Alternatives: ${patient.meatAndAlternativesHeifaScore}/10
+        - Dairy and Alternatives: ${patient.dairyAndAlternativesHeifaScore}/10
+        - Water: ${patient.waterHeifaScore}/5
+        - Sodium: ${patient.sodiumHeifaScore}/10
+        - Alcohol: ${patient.alcoholHeifaScore}/5
+        - Sugar: ${patient.sugarHeifaScore}/10
+        - Saturated Fat: ${patient.saturatedFatHeifaScore}/5
+        - Unsaturated Fat: ${patient.unsaturatedFatHeifaScore}/5
+        - Discretionary Foods: ${patient.discretionaryHeifaScore}/10
+        
+        RECENT FOOD INTAKE HISTORY:
+        $foodIntakeHistory
+        
+        USER'S QUESTION: "$userQuestion"
+        
+        Please provide a comprehensive response that:
+        1. Directly answers the user's question based on their specific data
+        2. Provides personalized insights and explanations
+        3. Offers practical tips and actionable recommendations
+        4. Includes relevant nutritional science where appropriate
+        5. Suggests helpful resources or websites if applicable (use real, reputable sources like dietitians.ca, heart.org, diabetes.org, etc.)
+        
+        Keep the tone friendly, professional, and encouraging. Make sure your response is at most
+         5 sentences long and provides valuable, actionable information. If you have large 
+         information chunk to share, please break it down into smaller sections with bold header 
+         title, with this, you can have 5 sentences long for 
+         each 
+         response section.
+    """.trimIndent()
+    }
+
 
     /**
      * Create motivational prompt based on patient data
@@ -161,20 +259,19 @@ class AIViewModel(context: Context) : ViewModel() {
             Total HEIFA Score: ${patient.heifaTotalScore}
             
             Detailed Scores:
-            - Vegetables: ${patient.vegetablesHeifaScore}
-            - Fruits: ${patient.fruitHeifaScore}
-            - Fruit Size Score: ${patient.fruitSizeScore}
-            - Fruit Variations Score: ${patient.fruitVariationsScore}
-            - Grains and Cereals: ${patient.grainsAndCerealsHeifaScore}
-            - Whole Grains: ${patient.wholegrainsHeifaScore}
-            - Meat and Alternatives: ${patient.meatAndAlternativesHeifaScore}
-            - Dairy and Alternatives: ${patient.dairyAndAlternativesHeifaScore}
-            - Sodium: ${patient.sodiumHeifaScore}
-            - Alcohol: ${patient.alcoholHeifaScore}
-            - Water: ${patient.waterHeifaScore}
-            - Sugar: ${patient.sugarHeifaScore}
-            - Saturated Fat: ${patient.saturatedFatHeifaScore}
-            - Unsaturated Fat: ${patient.unsaturatedFatHeifaScore}
+            - Vegetables: ${patient.vegetablesHeifaScore}/10
+            - Fruits: ${patient.fruitHeifaScore}/10 
+            - Grains and Cereals: ${patient.grainsAndCerealsHeifaScore}/5
+            - Whole Grains: ${patient.wholegrainsHeifaScore}/5
+            - Meat and Alternatives: ${patient.meatAndAlternativesHeifaScore}/10
+            - Dairy and Alternatives: ${patient.dairyAndAlternativesHeifaScore}/10
+            - Water: ${patient.waterHeifaScore}/5
+            - Sodium: ${patient.sodiumHeifaScore}/10
+            - Alcohol: ${patient.alcoholHeifaScore}/5
+            - Sugar: ${patient.sugarHeifaScore}/10
+            - Saturated Fat: ${patient.saturatedFatHeifaScore}/5
+            - Unsaturated Fat: ${patient.unsaturatedFatHeifaScore}/5
+            - Discretionary Foods: ${patient.discretionaryHeifaScore}/10
             
             $foodIntakeInfo
             
@@ -277,11 +374,17 @@ class AIViewModel(context: Context) : ViewModel() {
         """.trimIndent()
     }
 
-    /**
-     * Reset UI state to initial
-     */
-    fun resetState() {
-        _uiState.value = UIState.Initial
+    fun processText(input: String): String {
+        // Remove empty lines and process each line
+        val trimmedLines = input.lines()
+            .filter { it.isNotBlank() } // Remove empty lines
+            .joinToString("\n") { line ->
+                // Replace sentences wrapped with ** to bold
+                line.replace(Regex("\\*\\*(.*?)\\*\\*")) { matchResult ->
+                    "<b>${matchResult.groupValues[1]}</b>"
+                }
+            }
+        return trimmedLines
     }
 
     /**

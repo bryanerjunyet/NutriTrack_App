@@ -108,7 +108,10 @@ fun NutriCoachPageScreen(
     var showTipsDialog by remember { mutableStateOf(false) }
     var savedTips by remember { mutableStateOf<List<NutriCoachTip>>(emptyList()) }
     var isLoadingImage by remember { mutableStateOf(false) }
-
+    // AI Bot states
+    var aiQuestion by remember { mutableStateOf("") }
+    var isAskingAI by remember { mutableStateOf(false) }
+    var aiResponse by remember { mutableStateOf<String?>(null) }
     val coroutineScope = rememberCoroutineScope()
     val uiState by aiViewModel.uiState.collectAsState()
 
@@ -138,7 +141,13 @@ fun NutriCoachPageScreen(
             savedTips = tipViewModel.getTipsForPatient(currentUserID)
         }
     }
-
+    // Handle AI chat response
+    LaunchedEffect(uiState) {
+        if (uiState is UIState.AIChatSuccess) {
+            aiResponse = (uiState as UIState.AIChatSuccess).message
+            isAskingAI = false
+        }
+    }
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -172,13 +181,15 @@ fun NutriCoachPageScreen(
                         Column(
                             modifier = Modifier.padding(16.dp)
                         ) {
-                            Text(
-                                text = "Fruit Name",
-                                fontSize = 17.sp,
-                                fontWeight = FontWeight.Medium,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            )
+                            Column (modifier = Modifier.align(Alignment.CenterHorizontally)) {
+                                Text(
+                                    text = "Fruit Search",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(bottom = 8.dp)
+                                )
+                            }
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -208,7 +219,7 @@ fun NutriCoachPageScreen(
                                         }
                                     },
                                     colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
-                                    shape = RoundedCornerShape(8.dp),
+                                    shape = RoundedCornerShape(40.dp),
                                     enabled = !isSearching
                                 ) {
                                     if (isSearching) {
@@ -222,12 +233,20 @@ fun NutriCoachPageScreen(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
-                                            Icon(
-                                                painter = painterResource(id = R.drawable.search_icon),
-                                                contentDescription = "Search",
-                                                tint = Color.White,
-                                                modifier = Modifier.size(20.dp)
-                                            )
+                                            if (isSearching) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    color = Color.White,
+                                                    strokeWidth = 2.dp
+                                                )
+                                            } else {
+                                                Icon(
+                                                    painter = painterResource(id = R.drawable.search_icon),
+                                                    contentDescription = "Search",
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -344,25 +363,19 @@ fun NutriCoachPageScreen(
         // AI Generated Message Display
         item {
             when (uiState) {
-                is UIState.Loading -> {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                is UIState.NutriCoachLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(
-                                color = Color.Red
-                            )
-                        }
+                        CircularProgressIndicator(
+                            color = Color.Red
+                        )
                     }
-                }
 
+                }
                 is UIState.NutriCoachSuccess -> {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -404,6 +417,12 @@ fun NutriCoachPageScreen(
                 is UIState.ClinicianSuccess -> {
                     // This state is not used in NutriCoach, only in Clinician dashboard
                 }
+
+                is UIState.AIChatSuccess -> {
+                }
+
+                UIState.ClinicianLoading -> {}
+                UIState.AIChatLoading -> {}
             }
         }
 
@@ -416,7 +435,7 @@ fun NutriCoachPageScreen(
                 Button(
                     onClick = { showTipsDialog = true },
 //                    modifier = Modifier.fillMaxWidth(0.6f),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF8222)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Row(
@@ -439,7 +458,180 @@ fun NutriCoachPageScreen(
                 }
             }
         }
+// AI Bot Section
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Text(
+                        text = "NutriCoach AI Bot",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp)
+                    )
 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = aiQuestion,
+                            onValueChange = { aiQuestion = it },
+                            placeholder = {
+                                val suggestions = listOf(
+                                    "Explain my persona type?",
+                                    "What is the ideal time to sleep and wake up?",
+                                    "How should I improve my diet?",
+                                    "What foods should I eat more of?",
+                                    "How can I increase my HEIFA score?",
+                                    "What does my nutrition data tell you about me?"
+                                )
+                                Text(suggestions.random())
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            maxLines = 3
+                        )
+
+                        Button(
+                            onClick = {
+                                isAskingAI = true
+                                aiResponse = null // Clear previous response
+                                aiViewModel.generateCustomNutritionResponse(currentUserID, aiQuestion.trim())
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
+                            shape = RoundedCornerShape(40.dp),
+                        ) {
+                            if (isAskingAI) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.send_icon),
+                                        contentDescription = "Ask AI",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+// AI Response Card
+
+// Add this to handle the updated UI state in the existing when (uiState) block
+// Update the existing when (uiState) is UIState.NutriCoachSuccess case to not interfere with AI chat
+
+// Update the existing AI Generated Message Display item
+        item {
+            when (uiState) {
+                is UIState.AIChatLoading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            color = Color.Red
+                        )
+                    }
+
+                }
+
+                is UIState.AIChatSuccess -> {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE1BEE7)), // Light purple
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.message_icon),
+                                    contentDescription = "AI Response",
+                                    tint = Color(0xFF7B1FA2),
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = "AI Nutrition Assistant",
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF7B1FA2)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = (uiState as UIState.AIChatSuccess).message,
+                                fontSize = 14.sp,
+                                color = Color.Black,
+                                lineHeight = 20.sp
+                            )
+                        }
+                    }
+                }
+
+                is UIState.NutriCoachSuccess -> {
+                    // This is handled by the AI Response Card above
+                }
+
+                is UIState.Error -> {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFE1BEE7)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Text(
+                            text = "Error: ${(uiState as UIState.Error).errorMessage}",
+                            color = Color.Red,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+
+                is UIState.Initial -> {
+                    // Show nothing initially
+                }
+
+                is UIState.ClinicianSuccess -> {
+                    // This state is not used in NutriCoach, only in Clinician dashboard
+                }
+
+                UIState.ClinicianLoading -> {}
+                UIState.NutriCoachLoading -> {}
+            }
+        }
         // Add some bottom spacing for the navigation bar
         item {
             Spacer(modifier = Modifier.height(80.dp))
@@ -652,4 +844,17 @@ fun calculateFruitScore(fruitSizeScore: Float, fruitVariationsScore: Float): Dou
 
     // Calculate the optimal score
     return (cappedFruitServeSize.toDouble() / 2 * 5) + cappedFruitVariationsScore.toDouble()
+}
+
+fun processText(input: String): String {
+    // Remove empty lines and process each line
+    val trimmedLines = input.lines()
+        .filter { it.isNotBlank() } // Remove empty lines
+        .joinToString("\n") { line ->
+            // Replace sentences wrapped with ** to bold
+            line.replace(Regex("\\*\\*(.*?)\\*\\*")) { matchResult ->
+                "<b>${matchResult.groupValues[1]}</b>"
+            }
+        }
+    return trimmedLines
 }

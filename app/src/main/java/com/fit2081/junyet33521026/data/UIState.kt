@@ -13,7 +13,17 @@ sealed interface UIState {
     /**
      * Still loading data or waiting for AI response
      */
-    object Loading : UIState
+    object ClinicianLoading : UIState
+
+    /**
+     * Still loading data or waiting for AI response
+     */
+    object NutriCoachLoading : UIState
+
+    /**
+     * Still loading data or waiting for AI response
+     */
+    object AIChatLoading : UIState
 
     /**
      * Analysis has completed successfully for Clinician Insights
@@ -24,6 +34,11 @@ sealed interface UIState {
      * Motivational message generated successfully for NutriCoach
      */
     data class NutriCoachSuccess(val message: String) : UIState
+
+    /**
+     * AI Chat response generated successfully
+     */
+    data class AIChatSuccess(val message: String) : UIState
 
     /**
      * There was an error during analysis

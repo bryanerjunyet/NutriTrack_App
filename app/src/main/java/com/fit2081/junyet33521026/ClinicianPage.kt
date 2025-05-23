@@ -302,7 +302,7 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
                 // Nothing to show yet
             }
 
-            is UIState.Loading -> {
+            is UIState.ClinicianLoading -> {
                 CircularProgressIndicator(
                     modifier = Modifier
                         .padding(16.dp)
@@ -329,6 +329,17 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
 
             is UIState.NutriCoachSuccess -> {
                 // Nothing to show
+            }
+
+            is UIState.AIChatSuccess -> {
+
+            }
+
+            UIState.AIChatLoading -> {
+
+            }
+            UIState.NutriCoachLoading -> {
+
             }
         }
 

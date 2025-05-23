@@ -104,15 +104,18 @@ fun InsightsPageScreen(
             scores.add("Total Score" to patient.heifaTotalScore)
             scores.add("Discretionary" to patient.discretionaryHeifaScore)
             scores.add("Meat" to patient.meatAndAlternativesHeifaScore)
+            scores.add("Fruits" to patient.fruitHeifaScore)
+            scores.add("Vegetables" to patient.vegetablesHeifaScore)
             scores.add("Dairy" to patient.dairyAndAlternativesHeifaScore)
             scores.add("Sugar" to patient.sugarHeifaScore)
             scores.add("Sodium" to patient.sodiumHeifaScore)
-            scores.add("Grains & Cereal" to (patient.grainsAndCerealsHeifaScore + patient.wholegrainsHeifaScore))
-            scores.add("Fruits" to patient.fruitHeifaScore)
-            scores.add("Vegetables" to patient.vegetablesHeifaScore)
+
+            scores.add("Grains & Cereal" to patient.grainsAndCerealsHeifaScore)
+            scores.add("Whole Grains" to patient.wholegrainsHeifaScore)
             scores.add("Alcohol" to patient.alcoholHeifaScore)
             scores.add("Water" to patient.waterHeifaScore)
-            scores.add("Fat" to (patient.saturatedFatHeifaScore + patient.unsaturatedFatHeifaScore))
+            scores.add("Saturated Fat" to patient.saturatedFatHeifaScore)
+            scores.add("Unsaturated Fat" to patient.unsaturatedFatHeifaScore)
 
             foodScores.value = scores
             // Load score statistics
