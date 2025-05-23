@@ -21,7 +21,6 @@ class AIViewModel(context: Context) : ViewModel() {
     private val patientDao: PatientDao = NutriTrackDatabase.getDatabase(context).patientDao()
     private val foodIntakeDao: FoodIntakeDao = NutriTrackDatabase.getDatabase(context).foodIntakeDao()
 
-
     // API key for Gemini AI
     private val apiKey = "AIzaSyCro30xkTe0iSXe7vgIMjvCMMQ1SFz1gm8"
 

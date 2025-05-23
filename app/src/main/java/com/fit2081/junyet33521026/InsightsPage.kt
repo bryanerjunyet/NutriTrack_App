@@ -8,7 +8,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,7 +28,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -43,11 +41,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
-import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.utils.AuthManager
 import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 
 /**
@@ -87,7 +83,6 @@ fun InsightsPageScreen(
     val context = LocalContext.current
     val currentPage = remember { mutableStateOf("Insights") }
     // load current login user ID
-    val sharedPref = context.getSharedPreferences("UserLogin", Context.MODE_PRIVATE)
     val currentUserID = AuthManager.currentUserId ?: return
     // load food score from CSV file
     val foodScores = remember { mutableStateOf<List<Pair<String, Float>>>(emptyList()) }
@@ -104,11 +99,11 @@ fun InsightsPageScreen(
             scores.add("Sugar" to patient.sugarHeifaScore)
             scores.add("Sodium" to patient.sodiumHeifaScore)
             scores.add("Grains & Cereal" to (patient.grainsAndCerealsHeifaScore + patient.wholegrainsHeifaScore))
-            scores.add("Vegetables" to patient.vegetablesHeifaScore)
             scores.add("Fruits" to patient.fruitHeifaScore)
+            scores.add("Vegetables" to patient.vegetablesHeifaScore)
             scores.add("Alcohol" to patient.alcoholHeifaScore)
             scores.add("Water" to patient.waterHeifaScore)
-            scores.add("Saturated Fat" to (patient.saturatedFatHeifaScore + patient.unsaturatedFatHeifaScore))
+            scores.add("Fat" to (patient.saturatedFatHeifaScore + patient.unsaturatedFatHeifaScore))
 
             foodScores.value = scores
         }

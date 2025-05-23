@@ -43,15 +43,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.utils.AuthManager
 import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import kotlinx.coroutines.launch
-import java.io.BufferedReader
-import java.io.InputStreamReader
 
 
 /**
@@ -198,14 +195,19 @@ fun LoginScreen(
         Button(
             onClick = {
                 viewModel.viewModelScope.launch {
-                    passwordError = !viewModel.validateCredentials(userInputID, passwordInput)
-                    if (!passwordError) {
+                    if ((passwordInput.isNotEmpty() || userInputID.isNotEmpty()) && (viewModel.validateCredentials(userInputID, passwordInput)) ) {
                         Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
                         AuthManager.login(userInputID)
                         // decide which page to navigate
                         navigateDecision(context, userInputID)
                     } else {
-                        Toast.makeText(context, "Incorrect Credentials.", Toast.LENGTH_LONG).show()
+                        if (userInputID.isEmpty()) {
+                            Toast.makeText(context, "Invalid User ID", Toast.LENGTH_LONG).show()
+                        } else if (passwordInput.isEmpty()) {
+                            Toast.makeText(context, "Invalid Password", Toast.LENGTH_LONG).show()
+                        } else {
+                            Toast.makeText(context, "Incorrect Credentials.", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             },

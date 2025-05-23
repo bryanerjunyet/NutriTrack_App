@@ -20,7 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.utils.AuthManager
 import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import androidx.compose.foundation.layout.*
@@ -118,7 +118,7 @@ fun NutriCoachPageScreen(
 
         // Load random fruit image if fruit scores are optimal
         patient?.let { p ->
-            if (p.fruitSizeScore <= 2 && p.fruitVariationsScore <= 2) {
+            if (calculateFruitScore(p.fruitSizeScore, p.fruitVariationsScore) >= 5) {
                 isLoadingImage = true
                 randomImageUrl = fruitRepository.getRandomFruitImageUrl()
                 isLoadingImage = false
@@ -160,15 +160,8 @@ fun NutriCoachPageScreen(
         // Conditional Display: Fruit Search Section OR Random Image Section
         patient?.let { p ->
 
-            // Cap the scores at 2
-            val cappedFruitServeSize = if (p.fruitSizeScore > 2) 2 else p.fruitSizeScore
-            val cappedFruitVariationsScore = if (p.fruitVariationsScore > 5) 2 else p.fruitVariationsScore
-
-            // Calculate optimal score: (fruitServeSize/2 * 5 + fruitVariationsScore) >= 5
-            val optimalScore = (cappedFruitServeSize.toDouble() / 2 * 5) + cappedFruitVariationsScore.toDouble()
-
             // Show Fruit Search if scores are NOT optimal (< 2)
-            if (optimalScore < 5) {
+            if (calculateFruitScore(p.fruitSizeScore, p.fruitVariationsScore) < 5) {
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -295,19 +288,6 @@ fun NutriCoachPageScreen(
                                         .clip(RoundedCornerShape(8.dp)),
                                     contentScale = ContentScale.Crop
                                 )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(200.dp),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(
-                                        text = "No image available",
-                                        color = Color.Gray,
-                                        fontSize = 16.sp
-                                    )
-                                }
                             }
 
                             // Refresh image button
@@ -663,4 +643,13 @@ fun TipCard(tip: NutriCoachTip) {
             )
         }
     }
+}
+
+fun calculateFruitScore(fruitSizeScore: Float, fruitVariationsScore: Float): Double {
+    // Cap the scores
+    val cappedFruitServeSize = if (fruitSizeScore > 2) 2 else fruitSizeScore
+    val cappedFruitVariationsScore = if (fruitVariationsScore > 5) 5 else fruitVariationsScore
+
+    // Calculate the optimal score
+    return (cappedFruitServeSize.toDouble() / 2 * 5) + cappedFruitVariationsScore.toDouble()
 }

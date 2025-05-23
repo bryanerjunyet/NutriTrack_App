@@ -1,4 +1,4 @@
-package com.fit2081.junyet33521026.data
+package com.fit2081.junyet33521026.utils
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf

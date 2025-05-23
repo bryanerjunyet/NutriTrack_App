@@ -157,7 +157,7 @@ fun ClinicianLoginScreen(
                     onLoginSuccess()
                 } else {
                     // Incorrect key
-                    errorMessage.value = "Invalid clinician key. Please try again."
+                    errorMessage.value = "Invalid clinician key. Only admin can access this page."
                 }
             },
             modifier = Modifier.fillMaxWidth(0.5f),

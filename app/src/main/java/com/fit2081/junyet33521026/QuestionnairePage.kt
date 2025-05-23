@@ -55,7 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.fit2081.junyet33521026.data.AuthManager
+import com.fit2081.junyet33521026.utils.AuthManager
 import com.fit2081.junyet33521026.data.FoodIntake
 import com.fit2081.junyet33521026.data.FoodIntakeViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
