@@ -16,6 +16,30 @@ class PatientViewModel(context: Context) : ViewModel() {
 
     suspend fun updatePatient(patient: Patient) = patientRepo.updatePatient(patient)
 
+
+    // New methods for score distribution
+    suspend fun getAllScores(): List<Float> = patientRepo.getAllScores()
+
+    suspend fun getMinScore(): Float = patientRepo.getMinScore()
+
+    suspend fun getMaxScore(): Float = patientRepo.getMaxScore()
+
+    suspend fun getScoreDistribution(): List<ScoreFrequency> = patientRepo.getScoreDistribution()
+
+    suspend fun calculatePercentile(userScore: Float): Float = patientRepo.calculatePercentile(userScore)
+
+    suspend fun calculateMedianScore(): Float = patientRepo.calculateMedianScore()
+
+    suspend fun getScoreStats(userScore: Float): ScoreStats {
+        return ScoreStats(
+            minScore = getMinScore(),
+            maxScore = getMaxScore(),
+            medianScore = calculateMedianScore(),
+            userPercentile = calculatePercentile(userScore),
+            distribution = getScoreDistribution()
+        )
+    }
+
     suspend fun validateRegistration(userId: String, phoneNumber: String): Boolean {
         val patient = patientRepo.getPatient(userId)
         return patient.phoneNumber == phoneNumber

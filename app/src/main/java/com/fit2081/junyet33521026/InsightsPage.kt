@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
@@ -33,7 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.fit2081.junyet33521026.utils.AuthManager
+import com.fit2081.junyet33521026.data.ScoreStats
+import com.fit2081.junyet33521026.data.ScoreFrequency
 import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 
@@ -86,6 +94,7 @@ fun InsightsPageScreen(
     val currentUserID = AuthManager.currentUserId ?: return
     // load food score from CSV file
     val foodScores = remember { mutableStateOf<List<Pair<String, Float>>>(emptyList()) }
+    val scoreStats = remember { mutableStateOf<ScoreStats?>(null) }
 
     LaunchedEffect(currentUserID) {
         val patient = viewModel.getPatient(currentUserID)
@@ -106,13 +115,16 @@ fun InsightsPageScreen(
             scores.add("Fat" to (patient.saturatedFatHeifaScore + patient.unsaturatedFatHeifaScore))
 
             foodScores.value = scores
+            // Load score statistics
+            scoreStats.value = viewModel.getScoreStats(patient.heifaTotalScore)
         }
     }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(16.dp)
+        modifier = modifier.fillMaxSize().padding(16.dp).verticalScroll(rememberScrollState())
     ) {
         val totalScore = foodScores.value.firstOrNull()?.second?.toInt() ?: 0
+        val currentScoreStats = scoreStats.value
 
         // Insights title
         Row(
@@ -137,60 +149,138 @@ fun InsightsPageScreen(
             InsightsBar(food, score, fullScore)
             Spacer(modifier = Modifier.height(8.dp))
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(28.dp))
 
-        // Total Food Quality Score
-        Column(
-            modifier = Modifier
-                .fillMaxWidth() // lengthen the card
-                .background(
-                    Color(0xFFF0F0F0),
-                    shape = RoundedCornerShape(16.dp)
-                ) // light gray background
-                .padding(16.dp), // padding inside the card
-            horizontalAlignment = Alignment.CenterHorizontally
+
+        // Total Food Quality Score Card with Elevation
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            Text(
-                text = "Total Food Quality Score",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "${totalScore}/100",
-                fontSize = 50.sp,
-                fontWeight = FontWeight.Bold,
-                color = when { // set color based on score
-                    totalScore < 50 -> Color(0xFFBB0E01)
-                    totalScore < 70 -> Color(0xff2962ff)
-                    else -> Color(0xFF2E7D32)
-                }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            // Progress bar
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                LinearProgressIndicator(
-                    progress = { (totalScore.toFloat() / 100) },
-                    modifier = Modifier
-                        .weight(0.6f) // lengthen the bar
-                        .height(10.dp) // height of the bar
-                        .clip(RoundedCornerShape(5.dp)), // rounded corners
-                    color = when { // set color based on score
+                Text(
+                    text = "Total Food Quality Score",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "${totalScore}/100",
+                    fontSize = 50.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = when {
                         totalScore < 50 -> Color(0xFFBB0E01)
                         totalScore < 70 -> Color(0xff2962ff)
                         else -> Color(0xFF2E7D32)
-                    },
-                    trackColor = Color(0xFFE0E0E0)
+                    }
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                // Progress bar
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    LinearProgressIndicator(
+                        progress = { (totalScore.toFloat() / 100) },
+                        modifier = Modifier
+                            .weight(0.6f)
+                            .height(10.dp)
+                            .clip(RoundedCornerShape(5.dp)),
+                        color = when {
+                            totalScore < 50 -> Color(0xFFBB0E01)
+                            totalScore < 70 -> Color(0xff2962ff)
+                            else -> Color(0xFF2E7D32)
+                        },
+                        trackColor = Color(0xFFE0E0E0)
+                    )
+                }
             }
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Score Distribution Graph Card with Median
+        currentScoreStats?.let { stats ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Food Quality Score Distribution",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    // Updated chart with median line and user bar highlighting
+                    ScoreDistributionChart(
+                        distribution = stats.distribution,
+                        userScore = totalScore.toFloat(),
+                        minScore = stats.minScore,
+                        maxScore = stats.maxScore,
+                        medianScore = stats.medianScore
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Score range info with median
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "Min: ${stats.minScore.toInt()}",
+                            fontSize = 15.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "Median: ${stats.medianScore.toInt()}",
+                            fontSize = 15.sp,
+                            color = Color.DarkGray,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "Max: ${stats.maxScore.toInt()}",
+                            fontSize = 15.sp,
+                            color = Color.Gray
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Show percentile if available
+                    Text(
+                        text = "Better than ${stats.userPercentile.toInt()}% of users",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = when {
+                            stats.userPercentile.toInt() < 50 -> Color(0xFFBB0E01)
+                            stats.userPercentile.toInt() < 70 -> Color(0xff2962ff)
+                            else -> Color(0xFF2E7D32)
+                        }
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(20.dp))
+
 
         // Action Buttons
         Column(
-            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Share button
@@ -205,6 +295,12 @@ fun InsightsPageScreen(
                         insightsText.append("NutriTrack Food Insights\n\n")
                         insightsText.append("Total Food Score: ${totalScore.toInt()}/100\n\n")
                         insightsText.append("Food Categories Score:\n")
+
+                        currentScoreStats?.let { stats ->
+                            insightsText.append("Percentile: Better than ${stats.userPercentile.toInt()}% of users\n")
+                            insightsText.append("Score Range: ${stats.minScore.toInt()}-${stats.maxScore.toInt()}\n")
+                            insightsText.append("Median Score: ${stats.medianScore.toInt()}\n")
+                        }
 
                         foodScores.value.drop(1).forEachIndexed { index, (category, score) ->
                             val fullScore = if (index < 6) 10 else 5
@@ -267,6 +363,7 @@ fun InsightsPageScreen(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(80.dp))
         }
 
     }
@@ -314,5 +411,135 @@ fun InsightsBar(category: String, score: Float, fullScore: Int) {
             fontSize = 13.sp,
             modifier = Modifier.weight(0.1f)
         )
+    }
+}
+
+
+
+//@Composable
+//fun ScoreDistributionChart(
+//    distribution: List<ScoreFrequency>,
+//    userScore: Float,
+//    minScore: Float,
+//    maxScore: Float
+//) {
+//    Canvas(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .height(200.dp)
+//            .padding(8.dp)
+//    ) {
+//        val canvasWidth = size.width
+//        val canvasHeight = size.height
+//        val barWidth = canvasWidth / distribution.size.coerceAtLeast(1)
+//        val maxCount = distribution.maxOfOrNull { it.count } ?: 1
+//
+//        // Draw bars
+//        distribution.forEachIndexed { index, scoreFreq ->
+//            val barHeight = (scoreFreq.count.toFloat() / maxCount) * (canvasHeight * 0.8f)
+//            val xOffset = index * barWidth
+//            val yOffset = canvasHeight - barHeight
+//
+//            val barColor = if (scoreFreq.heifaTotalScore.toInt() == userScore.toInt()) {
+//                Color(0xFFFF2222) // Green for user's score
+//            } else {
+//                Color(0xFFF6AEAE) // Light blue for others
+//            }
+//
+//            drawRect(
+//                color = barColor,
+//                topLeft = Offset(xOffset + barWidth * 0.1f, yOffset),
+//                size = Size(barWidth * 0.8f, barHeight)
+//            )
+//        }
+//
+//        // Draw user score indicator
+//        val userScorePosition = ((userScore - minScore) / (maxScore - minScore)) * canvasWidth
+//        drawLine(
+//            color = Color(0xFF2234FF),
+//            start = Offset(userScorePosition, 0f),
+//            end = Offset(userScorePosition, canvasHeight),
+//            strokeWidth = 4.dp.toPx(),
+//            pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
+//        )
+//    }
+//}
+
+@Composable
+fun ScoreDistributionChart(
+    distribution: List<ScoreFrequency>,
+    userScore: Float,
+    minScore: Float,
+    maxScore: Float,
+    medianScore: Float
+) {
+    Canvas(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp)
+            .padding(8.dp)
+    ) {
+        // Get the canvas dimensions
+        val canvasWidth = size.width
+        val canvasHeight = size.height
+
+        // Calculate how wide each bar should be
+        val numberOfBars = distribution.size.coerceAtLeast(1)
+        val barWidth = canvasWidth / numberOfBars
+
+        // Find the highest count to scale our bars properly
+        val maxCount = distribution.maxOfOrNull { it.count } ?: 1
+
+        // Leave some space at the top for the chart to look nice
+        val maxBarHeight = canvasHeight * 0.8f
+
+        // Step 1: Draw all the bars
+        distribution.forEachIndexed { index, scoreData ->
+            // Calculate where this bar should be positioned horizontally
+            val xPosition = index * barWidth
+
+            // Calculate how tall this bar should be based on the count
+            val barHeight = (scoreData.count.toFloat() / maxCount) * maxBarHeight
+
+            // Calculate where the bar should start vertically (from bottom up)
+            val yPosition = canvasHeight - barHeight
+
+            // Decide the color: special color for user's score, gray for others
+            val barColor = if (scoreData.heifaTotalScore.toInt() == userScore.toInt()) {
+                // User's score gets a special red color
+                Color(0xFFBB0E01)
+            } else {
+                // All other scores get a light gray color
+                Color(0xFFF8B6B6)
+            }
+
+            // Draw the rectangle (bar)
+            drawRect(
+                color = barColor,
+                topLeft = Offset(
+                    x = xPosition + barWidth * 0.1f, // Small margin on left
+                    y = yPosition
+                ),
+                size = Size(
+                    width = barWidth * 0.8f, // Small margin on right
+                    height = barHeight
+                )
+            )
+        }
+
+        // Step 2: Draw the median line
+        if (maxScore > minScore) { // Avoid division by zero
+            // Calculate where the median should be positioned
+            val medianPosition = ((medianScore - minScore) / (maxScore - minScore)) * (canvasWidth)
+
+            // Draw a blue dashed line from top to bottom
+            drawLine(
+                color = Color(0xFFFF6F3F), // Blue color
+                start = Offset(medianPosition, 0f), // Top of canvas
+                end = Offset(medianPosition, canvasHeight), // Bottom of canvas
+                strokeWidth = 3.dp.toPx(), // Line thickness
+                pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 10f)) // Dashed pattern
+            )
+        }
     }
 }

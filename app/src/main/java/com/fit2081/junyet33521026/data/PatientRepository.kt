@@ -20,6 +20,38 @@ class PatientRepository(context: Context) {
 
     suspend fun updatePatient(patient: Patient) = patientDao.update(patient)
 
+    // New methods for score distribution
+    suspend fun getAllScores(): List<Float> = patientDao.getAllScores()
+
+    suspend fun getMinScore(): Float = patientDao.getMinScore()
+
+    suspend fun getMaxScore(): Float = patientDao.getMaxScore()
+
+    suspend fun getScoreDistribution(): List<ScoreFrequency> = patientDao.getScoreDistribution()
+
+    suspend fun calculatePercentile(userScore: Float): Float {
+        val countBelow = patientDao.getCountScoresBelow(userScore)
+        val totalCount = patientDao.getTotalPatientCount()
+        return if (totalCount > 0) (countBelow.toFloat() / totalCount) * 100 else 0f
+    }
+
+    // New method to calculate median
+    suspend fun calculateMedianScore(): Float {
+        val allScores = getAllScores()
+        return if (allScores.isEmpty()) {
+            0f
+        } else {
+            val middleIndex = allScores.size / 2
+            if (allScores.size % 2 == 0) {
+                // Even number of scores - average of two middle values
+                (allScores[middleIndex - 1] + allScores[middleIndex]) / 2
+            } else {
+                // Odd number of scores - middle value
+                allScores[middleIndex]
+            }
+        }
+    }
+
     suspend fun importPatientsFromCsv(context: Context) {
         val sharedPref = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         if (!sharedPref.getBoolean("csv_imported", false)) {

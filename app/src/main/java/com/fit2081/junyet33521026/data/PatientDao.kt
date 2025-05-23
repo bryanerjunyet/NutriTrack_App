@@ -31,4 +31,23 @@ interface PatientDao {
 
     @Query("SELECT AVG(heifaTotalScore) FROM patients WHERE sex = 'Female'")
     suspend fun getAverageHeifaScoreFemale(): Float
+
+    // New queries for score distribution
+    @Query("SELECT heifaTotalScore FROM patients ORDER BY heifaTotalScore ASC")
+    suspend fun getAllScores(): List<Float>
+
+    @Query("SELECT MIN(heifaTotalScore) FROM patients")
+    suspend fun getMinScore(): Float
+
+    @Query("SELECT MAX(heifaTotalScore) FROM patients")
+    suspend fun getMaxScore(): Float
+
+    @Query("SELECT COUNT(*) FROM patients WHERE heifaTotalScore < :score")
+    suspend fun getCountScoresBelow(score: Float): Int
+
+    @Query("SELECT COUNT(*) FROM patients")
+    suspend fun getTotalPatientCount(): Int
+
+    @Query("SELECT heifaTotalScore, COUNT(*) as count FROM patients GROUP BY CAST(heifaTotalScore AS INTEGER) ORDER BY heifaTotalScore")
+    suspend fun getScoreDistribution(): List<ScoreFrequency>
 }
