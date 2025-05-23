@@ -527,19 +527,35 @@ fun ScoreDistributionChart(
             )
         }
 
-        // Step 2: Draw the median line
-        if (maxScore > minScore) { // Avoid division by zero
-            // Calculate where the median should be positioned
-            val medianPosition = ((medianScore - minScore) / (maxScore - minScore)) * (canvasWidth)
+        // Step 2: Draw the median line (CORRECTED positioning)
+        if (distribution.isNotEmpty()) {
+            // Find the bar that contains the median score
+            var medianBarIndex = -1
+            var closestDistance = Float.MAX_VALUE
 
-            // Draw a blue dashed line from top to bottom
-            drawLine(
-                color = Color(0xFFFF6F3F), // Blue color
-                start = Offset(medianPosition, 0f), // Top of canvas
-                end = Offset(medianPosition, canvasHeight), // Bottom of canvas
-                strokeWidth = 3.dp.toPx(), // Line thickness
-                pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 10f)) // Dashed pattern
-            )
+            // Look through all bars to find which one has the median score
+            distribution.forEachIndexed { index, scoreData ->
+                val distance = kotlin.math.abs(scoreData.heifaTotalScore - medianScore)
+                if (distance < closestDistance) {
+                    closestDistance = distance
+                    medianBarIndex = index
+                }
+            }
+
+            // If we found the median bar, draw the line through its center
+            if (medianBarIndex >= 0) {
+                // Calculate the center position of the median bar
+                val medianBarCenterX = (medianBarIndex * barWidth) + (barWidth * 0.5f)
+
+                // Draw the median line through the center of the bar
+                drawLine(
+                    color = Color(0xFFFF6F3F), // Orange color for visibility
+                    start = Offset(medianBarCenterX, 0f), // Top of canvas
+                    end = Offset(medianBarCenterX, canvasHeight), // Bottom of canvas
+                    strokeWidth = 3.dp.toPx(), // Line thickness
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 10f)) // Dashed pattern
+                )
+            }
         }
     }
 }

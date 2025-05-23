@@ -32,7 +32,9 @@ class PatientRepository(context: Context) {
     suspend fun calculatePercentile(userScore: Float): Float {
         val countBelow = patientDao.getCountScoresBelow(userScore)
         val totalCount = patientDao.getTotalPatientCount()
-        return if (totalCount > 0) (countBelow.toFloat() / totalCount) * 100 else 0f
+        return if (totalCount > 1) {
+            (countBelow.toFloat() / (totalCount - 1)) * 100
+        } else 0f
     }
 
     // New method to calculate median
