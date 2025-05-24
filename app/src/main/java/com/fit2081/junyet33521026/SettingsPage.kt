@@ -19,8 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,13 +42,14 @@ import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 
 /**
- * Main activity for the application.
+ * Settings activity for the application.
  */
 class SettingsPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // PatientViewModel setup to manage patient data
         val patientViewModel = ViewModelProvider(
             this, PatientViewModel.PatientViewModelFactory(this)
         )[PatientViewModel::class.java]
@@ -57,10 +57,7 @@ class SettingsPage : ComponentActivity() {
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    SettingsPageScreen(
-                        Modifier.padding(innerPadding),
-                        patientViewModel
-                    )
+                    SettingsPageScreen(Modifier.padding(innerPadding), patientViewModel)
                 }
             }
         }
@@ -69,29 +66,25 @@ class SettingsPage : ComponentActivity() {
 
 
 /**
- * Composable function for the UI of Home Page.
+ * Composable function for the UI of Settings Page.
  *
  * @param modifier Modifier to be applied.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsPageScreen(
-    modifier: Modifier = Modifier,
-    viewModel: PatientViewModel
-) {
-    // Current context to start activity
+fun SettingsPageScreen(modifier: Modifier = Modifier, viewModel: PatientViewModel) {
+    // current context to start activity
     val context = LocalContext.current
-    val currentPage = remember { mutableStateOf("Settings") }
-
-    // Load current login user ID
+    // current login user ID
     val currentUserID = AuthManager.currentUserId ?: return
 
-    // State for user details
+    // current state of pages
+    val currentPage = remember { mutableStateOf("Settings") }
+    // current state of user details
     val patientName = remember { mutableStateOf("") }
     val phoneNumber = remember { mutableStateOf("") }
     val userId = remember { mutableStateOf("") }
 
-    // Load user details from view model
+    // use LaunchedEffect to fetch patient details
     LaunchedEffect(currentUserID) {
         val patient = viewModel.getPatient(currentUserID)
         patientName.value = patient.name ?: ""
@@ -103,7 +96,7 @@ fun SettingsPageScreen(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()) // scrollable content
     ) {
         // Settings title
         Text(
@@ -115,7 +108,7 @@ fun SettingsPageScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ACCOUNT section
+        // Account section
         Text(
             text = "ACCOUNT",
             fontSize = 14.sp,
@@ -184,7 +177,7 @@ fun SettingsPageScreen(
         }
 
         // Divider
-        Divider(
+        HorizontalDivider(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
@@ -192,7 +185,7 @@ fun SettingsPageScreen(
             color = Color.LightGray
         )
 
-        // OTHER SETTINGS section
+        // Other settings section
         Text(
             text = "OTHER SETTINGS",
             fontSize = 14.sp,
@@ -200,12 +193,12 @@ fun SettingsPageScreen(
             modifier = Modifier.padding(vertical = 8.dp)
         )
 
-        // Logout button
+        // User logout button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    // Logout user and navigate to login page
+                    // logout user and navigate to login page
                     AuthManager.logout()
                     val intent = Intent(context, LoginPage::class.java)
                     intent.flags =
@@ -241,7 +234,7 @@ fun SettingsPageScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    // Navigate to clinician login page
+                    // navigate to clinician login page
                     context.startActivity(Intent(context, ClinicianPage::class.java))
                 }
                 .padding(vertical = 16.dp),
@@ -268,9 +261,11 @@ fun SettingsPageScreen(
             )
         }
 
+        Spacer(modifier = Modifier.height(100.dp))
+
     }
 
-
+    // Bottom navigation bar
     Column {
         Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
@@ -278,11 +273,16 @@ fun SettingsPageScreen(
 
 }
 
-
+/**
+ * Formats a phone number string into +61 xxx xxx xxx format.
+ *
+ * @param phoneNumber The phone number string to format.
+ * @return A formatted phone number string.
+ */
 fun formatPhoneNumber(phoneNumber: String): String {
     return if (phoneNumber.length >= 11) {
         "+${phoneNumber.substring(0, 2)} ${phoneNumber.substring(2, 5)} ${phoneNumber.substring(5, 8)} ${phoneNumber.substring(8)}"
     } else {
-        phoneNumber // Return as is if not enough digits
+        phoneNumber
     }
 }

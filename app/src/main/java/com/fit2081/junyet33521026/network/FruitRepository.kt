@@ -28,9 +28,9 @@ class FruitRepository {
     /**
      * Get random fruit image URL
      */
-    suspend fun getRandomFruitImageUrl(): String {
+    suspend fun getRandomImageUrl(): String {
         return try {
-            val response = imageApiService.getRandomFruitImage()
+            val response = imageApiService.getRandomImage()
             if (response.isSuccessful) {
                 // Generate unique URL with timestamp to ensure different images
                 "https://picsum.photos/400/300?random=${System.currentTimeMillis()}"

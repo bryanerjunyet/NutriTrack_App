@@ -52,13 +52,14 @@ import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 
 
 /**
- * Main activity for the application.
+ * Home activity for the application.
  */
 class HomePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // PatientViewModel setup to manage patient data
         val patientViewModel = ViewModelProvider(
             this, PatientViewModel.PatientViewModelFactory(this)
         )[PatientViewModel::class.java]
@@ -67,9 +68,7 @@ class HomePage : ComponentActivity() {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     HomePageScreen(
-                        Modifier.padding(innerPadding),
-                        patientViewModel
-                    )
+                        Modifier.padding(innerPadding), patientViewModel)
                 }
             }
         }
@@ -81,21 +80,21 @@ class HomePage : ComponentActivity() {
  * Composable function for the UI of Home Page.
  *
  * @param modifier Modifier to be applied.
+ * @param viewModel ViewModel to manage patient data.
  */
 @Composable
-fun HomePageScreen(
-    modifier: Modifier = Modifier,
-    viewModel: PatientViewModel
-) {
+fun HomePageScreen(modifier: Modifier = Modifier, viewModel: PatientViewModel) {
     // current context to start activity
     val context = LocalContext.current
-    val currentPage = remember { mutableStateOf("Home") }
-    // load current login user ID
+    // current login user ID
     val currentUserID = AuthManager.currentUserId ?: return
-    // load food score from CSV file
+
+    // current state attributes
+    val currentPage = remember { mutableStateOf("Home") }
     val foodScore = remember { mutableStateOf(0f) }
     val patientName = remember { mutableStateOf("") }
 
+    // use LaunchedEffect to load patient data
     LaunchedEffect(currentUserID) {
         val patient = viewModel.getPatient(currentUserID)
         foodScore.value = patient.heifaTotalScore
@@ -103,7 +102,7 @@ fun HomePageScreen(
     }
 
     Column(
-        modifier = modifier.padding(16.dp).verticalScroll(rememberScrollState()),
+        modifier = modifier.padding(16.dp).verticalScroll(rememberScrollState()), // scrollable page
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -135,12 +134,8 @@ fun HomePageScreen(
             // Edit button
             Button(
                 onClick = {
-                    context.startActivity(
-                        Intent(
-                            context,
-                            QuestionnairePage::class.java
-                        )
-                    ) // navigate to QuestionnairePage
+                    // navigate to QuestionnairePage
+                    context.startActivity(Intent(context, QuestionnairePage::class.java))
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
                 shape = RoundedCornerShape(6.dp),
@@ -197,12 +192,7 @@ fun HomePageScreen(
                 modifier = Modifier
                     .padding(top = 4.dp)
                     .clickable {
-                        context.startActivity(
-                            Intent(
-                                context,
-                                InsightsPage::class.java
-                            )
-                        )
+                        context.startActivity(Intent(context, InsightsPage::class.java))
                     } // navigate to InsightsPage
             )
         }
@@ -224,8 +214,10 @@ fun HomePageScreen(
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 8.dp)
         )
+        Spacer(modifier = Modifier.height(100.dp))
     }
 
+    // Bottom navigation bar
     Column {
         Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
@@ -239,11 +231,10 @@ fun HomePageScreen(
  * Composable function for the Bottom Navigation Bar.
  *
  * @param context Context to start activities.
+ * @param currentPage MutableState to track the current page.
  */
 fun BottomNavigationBar(context: Context, currentPage: MutableState<String>) {
-    Column (modifier = Modifier
-        .fillMaxWidth()
-        .background(Color.White)) {
+    Column (modifier = Modifier.fillMaxWidth().background(Color.White)) {
         // Gray line separator
         HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
         Spacer(modifier = Modifier.height(10.dp))

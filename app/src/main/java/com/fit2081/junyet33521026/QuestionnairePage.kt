@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -66,13 +67,14 @@ import androidx.core.content.edit
 
 
 /**
- * Main activity for the application.
+ * Questionnaire submission activity for the application.
  */
 class QuestionnairePage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // FoodIntakeViewModel setup to manage food intake data
         val foodIntakeViewModel = ViewModelProvider(
             this, FoodIntakeViewModel.FoodIntakeViewModelFactory(this)
         )[FoodIntakeViewModel::class.java]
@@ -81,8 +83,7 @@ class QuestionnairePage : ComponentActivity() {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     FoodIntakeQuestionnaireScreen(
-                        Modifier.padding(innerPadding),
-                        foodIntakeViewModel
+                        Modifier.padding(innerPadding), foodIntakeViewModel
                     )
                 }
             }
@@ -92,27 +93,24 @@ class QuestionnairePage : ComponentActivity() {
 
 
 @Composable
-        /**
+/**
  * Composable function for the UI of Food Intake Questionnaire screen.
  *
  * @param modifier Modifier to be applied.
+ * @param viewModel ViewModel to manage food intake data.
  */
-fun FoodIntakeQuestionnaireScreen(
-    modifier: Modifier = Modifier,
-    viewModel: FoodIntakeViewModel
-) {
+fun FoodIntakeQuestionnaireScreen(modifier: Modifier = Modifier, viewModel: FoodIntakeViewModel) {
     // current context to start activity
     val context = LocalContext.current
-    // load user accounts from CSV file
+    // load current user login
     val userID = AuthManager.currentUserId ?: return
     // load any saved responses
-    val existingFoodIntake = remember { mutableStateOf<FoodIntake?>(null) }
+    val savedFoodIntake = remember { mutableStateOf<FoodIntake?>(null) }
 
     // Food selection
     val foodCategories = listOf("Fruits", "Red Meat", "Fish", "Vegetables", "Seafood", "Eggs", "Grains", "Poultry", "Nuts/Seeds")
+    // track current selected foods
     val selectedFoods = remember { mutableStateListOf<String>() }
-
-    Log.d("QuestionnairePage", "Selected Foods: $selectedFoods")
 
     // Persona selection
     val personaCategories = mapOf(
@@ -123,13 +121,10 @@ fun FoodIntakeQuestionnaireScreen(
         "Health Procrastinator" to Pair(R.drawable.health_procrastinator, "I’m contemplating healthy eating but it’s not a priority for me right now. I know the basics about what it means to be healthy, but it doesn’t seem relevant to me right now. I have taken a few steps to be healthier but I am not motivated to make it a high priority because I have too many other things going on in my life."),
         "Food Carefree" to Pair(R.drawable.food_carefree, "I’m not bothered about healthy eating. I don’t really see the point and I don’t think about it. I don’t really notice healthy eating tips or recipes and I don’t care what I eat.")
     )
-    // load any saved persona
     // track current selected persona
     val selectedPersona = remember { mutableStateOf("") }
     var personaError by remember { mutableStateOf(false) }
-    Log.d("QuestionnairePage", "Selected Persona: $selectedPersona")
 
-    // load any saved times
     // track current selected times
     val mealTime = remember { mutableStateOf("00:00") }
     val sleepTime = remember { mutableStateOf("00:00") }
@@ -141,13 +136,14 @@ fun FoodIntakeQuestionnaireScreen(
         "What time of day approx. do you go to sleep at night?" to sleepTime,
         "What time of day approx. do you wake up in the morning?" to wakeTime
     )
-    Log.d("QuestionnairePage", "Meal Time: $mealTime")
 
+    // use LaunchedEffect to load saved responses
+    // execute side effects when userID updated
     LaunchedEffect(userID) {
-        existingFoodIntake.value = viewModel.getLatestFoodIntake(userID)
-        Log.d("QuestionnairePage", "Existing Food Intake: ${existingFoodIntake.value}")
-
-        existingFoodIntake.value?.let {
+        // fetch saved food intake data
+        savedFoodIntake.value = viewModel.getLatestFoodIntake(userID)
+        // populate saved responses state
+        savedFoodIntake.value?.let {
             selectedFoods.clear()
             selectedFoods.addAll(Json.decodeFromString(it.selectedFoods))
             selectedPersona.value = it.persona
@@ -158,7 +154,8 @@ fun FoodIntakeQuestionnaireScreen(
     }
 
     Column(
-        modifier = modifier.padding(14.dp).verticalScroll(rememberScrollState())
+        modifier = modifier.padding(14.dp)
+                           .verticalScroll(rememberScrollState()) // scrollable page
     ) {
         // Questionnaire title
         Text(
@@ -210,19 +207,15 @@ fun FoodIntakeQuestionnaireScreen(
         // Save button
         Button(
             onClick = {
+                // validate responses
                 personaError = selectedPersona.value.isEmpty()
                 timeError = mealTime.value == sleepTime.value || mealTime.value == wakeTime.value || sleepTime.value == wakeTime.value
-                Log.d ("QuestionnairePage", "Here1")
-                Log.d("QuestionnairePage", "Selected Foods: $selectedFoods")
                 if (!personaError && !timeError) {
-                    Log.d("QuestionnairePage", "Here2")
-                    // save responses to SharedPreferences
+                    // save responses to database
                     viewModel.viewModelScope.launch {
-                        Log.d("QuestionnairePage", "Here3")
-                        if (existingFoodIntake.value != null) {
-                            Log.d("QuestionnairePage", "Here4")
+                        if (savedFoodIntake.value != null) {
                             viewModel.updateFoodIntake(
-                                id = existingFoodIntake.value!!.id,
+                                id = savedFoodIntake.value!!.id,
                                 patientId = userID,
                                 selectedFoods = selectedFoods,
                                 persona = selectedPersona.value,
@@ -230,8 +223,8 @@ fun FoodIntakeQuestionnaireScreen(
                                 sleepTime = sleepTime.value,
                                 wakeTime = wakeTime.value
                             )
+                            Toast.makeText(context, "Update successful", Toast.LENGTH_SHORT).show()
                         } else {
-                            Log.d("QuestionnairePage", "Here5")
                             viewModel.saveFoodIntake(
                                 patientId = userID,
                                 selectedFoods = selectedFoods,
@@ -241,14 +234,10 @@ fun FoodIntakeQuestionnaireScreen(
                                 wakeTime = wakeTime.value
                             )
                             context.getSharedPreferences("${userID}Response", Context.MODE_PRIVATE).edit() {
-                                putBoolean(
-                                    "completedResponse",
-                                    true
-                                )
+                                putBoolean("completedResponse", true)
                             }
-                            Log.d("QuestionnairePage", "Here6")
+                            Toast.makeText(context, "Save successful", Toast.LENGTH_SHORT).show()
                         }
-                        Log.d("QuestionnairePage", "Here7")
                         // navigate to HomePage
                         context.startActivity(Intent(context, HomePage::class.java))
                     }

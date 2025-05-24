@@ -11,17 +11,17 @@ sealed interface UIState {
     object Initial : UIState
 
     /**
-     * Still loading data or waiting for AI response
+     * Still loading data or waiting for Clinician response
      */
     object ClinicianLoading : UIState
 
     /**
-     * Still loading data or waiting for AI response
+     * Still loading data or waiting for NutriCoach Fruit Search response
      */
     object NutriCoachLoading : UIState
 
     /**
-     * Still loading data or waiting for AI response
+     * Still loading data or waiting for NutriAI Chat response
      */
     object AIChatLoading : UIState
 
@@ -36,12 +36,12 @@ sealed interface UIState {
     data class NutriCoachSuccess(val message: String) : UIState
 
     /**
-     * AI Chat response generated successfully
+     * NutriAI Chat response generated successfully
      */
     data class AIChatSuccess(val message: String) : UIState
 
     /**
-     * There was an error during analysis
+     * There was an error during generation or analysis
      */
     data class Error(val errorMessage: String) : UIState
 }

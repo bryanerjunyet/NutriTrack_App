@@ -5,39 +5,97 @@ import kotlinx.coroutines.flow.Flow
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
+/**
+ * PatientRepository class acts as a mediator between the database and application's UI
+ * that provides methods to interact with the PatientDao and perform operations related to patients.
+ * @param context Context to access application resources and database.
+ */
 class PatientRepository(context: Context) {
+    // PatientDao instance to perform database operations
     private val patientDao: PatientDao
 
+    // Constructor to setup PatientDao
     init {
         patientDao = NutriTrackDatabase.getDatabase(context).patientDao()
     }
 
+    /////////// Basic Operations /////////
+
+    /**
+     * Retrieves a patient by their user ID.
+     * @param userId Patient ID.
+     * @return The patient corresponding to the user ID.
+     */
     suspend fun getPatient(userId: String): Patient = patientDao.getPatient(userId)
 
+    /**
+     * Retrieves all patients in the database.
+     * @return A flow of a list of all patients.
+     */
     fun getAllPatients(): Flow<List<Patient>> = patientDao.getAllPatients()
 
+    /**
+     * Retrieves all patients in the database.
+     * @return A list of all patients.
+     */
+    suspend fun getAllPatientsList(): List<Patient> = patientDao.getAllPatientsList()
+
+    /**
+     * Retrieves all user IDs in the database.
+     * @return A flow of a list of user IDs.
+     */
     fun getAllUserIds(): Flow<List<String>> = patientDao.getAllUserIds()
 
+    /**
+     * Inserts a new patient into the database.
+     * @param patient The patient to be inserted.
+     */
     suspend fun updatePatient(patient: Patient) = patientDao.update(patient)
 
-    // New methods for score distribution
+
+    ///////// Advance Operation for Score Statistics /////////
+
+    /**
+     * Retrieves all scores from the database.
+     * @return A list of all scores.
+     */
     suspend fun getAllScores(): List<Float> = patientDao.getAllScores()
 
+    /**
+     * Retrieves the minimum score from the database.
+     * @return The minimum score.
+     */
     suspend fun getMinScore(): Float = patientDao.getMinScore()
 
+    /**
+     * Retrieves the maximum score from the database.
+     * @return The maximum score.
+     */
     suspend fun getMaxScore(): Float = patientDao.getMaxScore()
 
+    /**
+     * Retrieves the score distribution from the database.
+     * @return A list of score frequencies.
+     */
     suspend fun getScoreDistribution(): List<ScoreFrequency> = patientDao.getScoreDistribution()
 
+    /**
+     * Calculates the percentile of a given score based on the score distribution.
+     * @param userScore The score to calculate the percentile for.
+     * @return The percentile of the given score.
+     */
     suspend fun calculatePercentile(userScore: Float): Float {
-        val countBelow = patientDao.getCountScoresBelow(userScore)
-        val totalCount = patientDao.getTotalPatientCount()
-        return if (totalCount > 1) {
-            (countBelow.toFloat() / (totalCount - 1)) * 100
+        val scorePosition = patientDao.getScorePosition(userScore)
+        val totalPatient = patientDao.getTotalPatient()
+        return if (totalPatient > 1) {
+            (scorePosition.toFloat() / (totalPatient - 1)) * 100
         } else 0f
     }
 
-    // New method to calculate median
+    /**
+     * Calculates the median score from the list of all scores.
+     * @return The median score.
+     */
     suspend fun calculateMedianScore(): Float {
         val allScores = getAllScores()
         return if (allScores.isEmpty()) {
@@ -54,6 +112,13 @@ class PatientRepository(context: Context) {
         }
     }
 
+
+    /////// Load Database Operation /////////
+
+    /**
+     * Validates the registration of a patient based on user ID and phone number.
+     * @param context The application context.
+     */
     suspend fun importPatientsFromCsv(context: Context) {
         val sharedPref = context.getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
         if (!sharedPref.getBoolean("csv_imported", false)) {
@@ -63,7 +128,11 @@ class PatientRepository(context: Context) {
         }
     }
 
-
+    /**
+     * Parses a CSV file and returns a list of Patient data.
+     * @param context The application context.
+     * @return A list of Patient data.
+     */
     private fun parseCsv(context: Context): List<Patient> {
         val patients = mutableListOf<Patient>()
         val assets = context.assets
@@ -72,7 +141,7 @@ class PatientRepository(context: Context) {
             val inputStream = assets.open("nutritrack_users.csv")
             val reader = BufferedReader(InputStreamReader(inputStream))
 
-            // Read header row to map column names
+            // read header row to map column names
             val headerRow = reader.readLine() ?: return emptyList()
             val headers = headerRow.replace("\uFEFF", "").split(",").map { it.trim() }
             val headerMap = headers.mapIndexed { index, header -> header to index }.toMap()
@@ -93,7 +162,7 @@ class PatientRepository(context: Context) {
                             discretionaryHeifaScore = values.getOrNull(headerMap["DiscretionaryHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f,
                             vegetablesHeifaScore = values.getOrNull(headerMap["VegetablesHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f,
                             fruitHeifaScore = values.getOrNull(headerMap["FruitHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f,
-                            fruitSizeScore = values.getOrNull(headerMap["Fruitservesize"] ?: -1)?.toFloatOrNull() ?: 0f,
+                            fruitSize = values.getOrNull(headerMap["Fruitservesize"] ?: -1)?.toFloatOrNull() ?: 0f,
                             fruitVariationsScore = values.getOrNull(headerMap["Fruitvariationsscore"] ?: -1)?.toFloatOrNull() ?: 0f,
                             grainsAndCerealsHeifaScore = values.getOrNull(headerMap["GrainsandcerealsHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f,
                             wholegrainsHeifaScore = values.getOrNull(headerMap["WholegrainsHEIFAscoreMale"] ?: -1)?.toFloatOrNull() ?: 0f,
@@ -115,7 +184,7 @@ class PatientRepository(context: Context) {
                             discretionaryHeifaScore = values.getOrNull(headerMap["DiscretionaryHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f,
                             vegetablesHeifaScore = values.getOrNull(headerMap["VegetablesHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f,
                             fruitHeifaScore = values.getOrNull(headerMap["FruitHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f,
-                            fruitSizeScore = values.getOrNull(headerMap["Fruitservesize"] ?: -1)?.toFloatOrNull() ?: 0f,
+                            fruitSize = values.getOrNull(headerMap["Fruitservesize"] ?: -1)?.toFloatOrNull() ?: 0f,
                             fruitVariationsScore = values.getOrNull(headerMap["Fruitvariationsscore"] ?: -1)?.toFloatOrNull() ?: 0f,
                             grainsAndCerealsHeifaScore = values.getOrNull(headerMap["GrainsandcerealsHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f,
                             wholegrainsHeifaScore = values.getOrNull(headerMap["WholegrainsHEIFAscoreFemale"] ?: -1)?.toFloatOrNull() ?: 0f,

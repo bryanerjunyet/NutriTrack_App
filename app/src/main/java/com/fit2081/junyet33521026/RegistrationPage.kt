@@ -54,11 +54,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 
+/**
+ * Registration activity for the application.
+ */
 class RegistrationPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // PatientViewModel setup to handle patient data
         val patientViewModel = ViewModelProvider(
             this, PatientViewModel.PatientViewModelFactory(this)
         )[PatientViewModel::class.java]
@@ -77,17 +81,23 @@ class RegistrationPage : ComponentActivity() {
     }
 }
 
+/**
+ * Composable function for the UI of Home Page.
+ *
+ * @param modifier Modifier to be applied.
+ * @param viewModel ViewModel to manage patient data.
+ * @param onNavigateToLogin Callback to navigate to the login screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RegistrationScreen(
-    modifier: Modifier = Modifier,
-    viewModel: PatientViewModel,
-    onNavigateToLogin: () -> Unit
-) {
+fun RegistrationScreen(modifier: Modifier = Modifier, viewModel: PatientViewModel, onNavigateToLogin: () -> Unit) {
+    // current context and coroutine scope for handling asynchronous operations
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
+    // handle all user accounts as state
     val userAccounts by viewModel.allUserIds.collectAsState(initial = emptyList())
 
+    // current state variables from user input
     var userInputID by remember { mutableStateOf("") }
     var userOptionsID by remember { mutableStateOf(false) }
     var phoneNumber by remember { mutableStateOf("") }
@@ -97,7 +107,10 @@ fun RegistrationScreen(
     var errorMessage by remember { mutableStateOf("") }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(32.dp).verticalScroll(rememberScrollState()),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp)
+            .verticalScroll(rememberScrollState()), // scrollable content
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // NutriTrack Logo
@@ -146,7 +159,7 @@ fun RegistrationScreen(
         }
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Phone number field
+        // Phone number input
         OutlinedTextField(
             value = phoneNumber,
             onValueChange = { phoneNumber = it },
@@ -158,7 +171,7 @@ fun RegistrationScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Name field
+        // Name input
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
@@ -168,7 +181,7 @@ fun RegistrationScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Password fields
+        // Password input
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -179,6 +192,7 @@ fun RegistrationScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Confirm password input
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
@@ -188,6 +202,7 @@ fun RegistrationScreen(
             singleLine = true
         )
 
+        // Error message display
         if (errorMessage.isNotEmpty()) {
             Text(
                 text = errorMessage,
@@ -199,7 +214,7 @@ fun RegistrationScreen(
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Register description
+        // Registration description
         if (errorMessage.isEmpty()) {
             Text(
                 text = "This app is only for pre-registered users. Enter your ID, phone number and password to claim your account.",
@@ -214,44 +229,42 @@ fun RegistrationScreen(
             onClick = {
                 errorMessage = ""
 
+                // launch coroutine to for input validation before registration
                 coroutineScope.launch {
-                    Log.d("Registration", "Validation triggered")
-
+                    // valid user input
                     if (userInputID.isEmpty()) {
                         errorMessage = "Please select a User ID"
                         return@launch
                     }
-
+                    // valid phone number
                     if (phoneNumber.isEmpty()) {
                         errorMessage = "Please enter your phone number"
                         return@launch
                     }
-
+                    // valid name
                     if (name.isEmpty()) {
                         errorMessage = "Name cannot be empty"
                         return@launch
                     }
-
+                    // valid password
                     if (password.isEmpty() || confirmPassword.isEmpty()) {
                         errorMessage = "Password fields cannot be empty"
                         return@launch
                     }
-
+                    // valid password match
                     if (password != confirmPassword) {
                         errorMessage = "Passwords do not match"
                         return@launch
                     }
-
+                    // correct phone number match with user ID
                     val isPhoneMatch = viewModel.validateRegistration(userInputID, phoneNumber)
-                    Log.d("Registration", "Phone number match result: $isPhoneMatch")
-
                     if (!isPhoneMatch) {
                         errorMessage = "Phone number does not match with User ID"
                         return@launch
                     }
 
+                    // register patient
                     val success = viewModel.registerPatient(userInputID, phoneNumber, name, password)
-                    Log.d("Registration", "Registration success: $success")
                     if (success) {
                         Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
                     } else {

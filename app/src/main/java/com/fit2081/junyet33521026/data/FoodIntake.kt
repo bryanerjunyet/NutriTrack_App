@@ -4,7 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
-// FoodIntake.kt
+
 @Entity(
     tableName = "food_intakes",
     foreignKeys = [
@@ -16,6 +16,9 @@ import androidx.room.PrimaryKey
         )
     ]
 )
+/**
+ * Data class for a FoodIntake entity in the database.
+ */
 data class FoodIntake(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val patientId: String,

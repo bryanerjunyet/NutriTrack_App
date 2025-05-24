@@ -4,12 +4,23 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 @Entity(tableName = "patients")
+/**
+ * Data class for a patient entity in the database.
+ */
 data class Patient(
+
+    ///////// Unique identifier for patient entity /////////
     @PrimaryKey val userId: String,
+
+
+    ///////// Patient's basic information /////////
     val phoneNumber: String,
     var name: String ?= null,
     var password: String ?= null,
     val sex: String,
+
+
+    ///////// Patient's food scores /////////
 
     // Total scores
     val heifaTotalScore: Float,
@@ -22,7 +33,7 @@ data class Patient(
 
     // Fruits
     val fruitHeifaScore: Float,
-    val fruitSizeScore: Float,
+    val fruitSize: Float,
     val fruitVariationsScore: Float,
 
     // Grains and cereals

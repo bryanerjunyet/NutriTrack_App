@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -33,10 +35,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import com.fit2081.junyet33521026.data.NutriTrackDatabase
 import com.fit2081.junyet33521026.data.PatientViewModel
 import com.fit2081.junyet33521026.ui.theme.JunYet33521026Theme
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 
 /**
@@ -47,19 +49,18 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Database setup at first launch
-        val db = NutriTrackDatabase.getDatabase(this)
+        // PatientViewModel setup to setup patient database
         val patientViewModel = ViewModelProvider(
             this, PatientViewModel.PatientViewModelFactory(this)
         )[PatientViewModel::class.java]
 
+        // Database setup at first launch only
         val sharedPreferences = getSharedPreferences("NutriTrackSetup", Context.MODE_PRIVATE)
         val databaseSetup = sharedPreferences.getBoolean("completeSetup", false)
-
         if (!databaseSetup) {
             lifecycleScope.launch {
                 patientViewModel.importPatientsFromCsv(this@MainActivity)
-                sharedPreferences.edit().putBoolean("completeSetup", true).apply()
+                sharedPreferences.edit() { putBoolean("completeSetup", true) }
             }
         }
 
@@ -81,13 +82,13 @@ class MainActivity : ComponentActivity() {
  * @param modifier Modifier to be applied.
  */
 fun WelcomeScreen(modifier: Modifier = Modifier) {
-    // Current context to start activity
+    // current context to start activity
     val context = LocalContext.current
-    // UriHandler to open links
+    // uriHandler to open links
     val uriHandler = LocalUriHandler.current
 
     Column(
-        modifier = modifier.padding(32.dp), // maximum size but space on all sides
+        modifier = modifier.padding(32.dp).verticalScroll(rememberScrollState()), // maximum size but space on all sides
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 

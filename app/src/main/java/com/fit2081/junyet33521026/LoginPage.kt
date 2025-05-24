@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
@@ -52,13 +54,14 @@ import kotlinx.coroutines.launch
 
 
 /**
- * Main activity for the application.
+ * Login activity for the application.
  */
 class LoginPage : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // PatientViewModel setup to manage patient data
         val patientViewModel = ViewModelProvider(
             this, PatientViewModel.PatientViewModelFactory(this)
         )[PatientViewModel::class.java]
@@ -66,10 +69,7 @@ class LoginPage : ComponentActivity() {
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    LoginScreen(
-                        Modifier.padding(innerPadding),
-                        patientViewModel
-                    )
+                    LoginScreen(Modifier.padding(innerPadding), patientViewModel)
                 }
             }
         }
@@ -81,31 +81,31 @@ class LoginPage : ComponentActivity() {
  * Composable function for the UI of Login screen.
  *
  * @param modifier Modifier to be applied.
+ * @param viewModel ViewModel to manage patient data.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginScreen(
-    modifier: Modifier = Modifier,
-    viewModel: PatientViewModel
-) {
+fun LoginScreen(modifier: Modifier = Modifier, viewModel: PatientViewModel) {
     // current context to start activity
     val context = LocalContext.current
+    // handle all user accounts as state
     val userAccounts by viewModel.allUserIds.collectAsState(initial = emptyList())
 
     // user ID input
     var userInputID by remember { mutableStateOf("") }
     // user ID dropdown options
     var userOptionsID by remember { mutableStateOf(false) }
-    // input phone number
+    // input password
     var passwordInput by remember { mutableStateOf("") }
-    // check phone number error
+    // check password error
     var passwordError by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(32.dp), // maximum size but space on all sides
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(32.dp)
+            .verticalScroll(rememberScrollState()), // maximum size but space on all sides
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
 
         // NutriTrack Logo
@@ -158,14 +158,14 @@ fun LoginScreen(
 
         // Password
         OutlinedTextField(
-            value = passwordInput,
+            value = passwordInput, // current password login
             onValueChange = {
                 passwordInput = it
             },
             label = { Text("Enter Password") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             isError = passwordError,
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = PasswordVisualTransformation(), // hide password
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -195,31 +195,33 @@ fun LoginScreen(
         Button(
             onClick = {
                 viewModel.viewModelScope.launch {
+                    // successful login
                     if ((passwordInput.isNotEmpty() || userInputID.isNotEmpty()) && (viewModel.validateCredentials(userInputID, passwordInput)) ) {
                         Toast.makeText(context, "Login Successful", Toast.LENGTH_LONG).show()
                         AuthManager.login(userInputID)
-                        // decide which page to navigate
+                        // navigate first visitor page or home page
                         navigateDecision(context, userInputID)
-                    } else {
-                        if (userInputID.isEmpty()) {
+                    } else { // unsuccessful login
+                        if (userInputID.isEmpty()) { // no user ID
                             Toast.makeText(context, "Invalid User ID", Toast.LENGTH_LONG).show()
-                        } else if (passwordInput.isEmpty()) {
+                        } else if (passwordInput.isEmpty()) { // no password
                             Toast.makeText(context, "Invalid Password", Toast.LENGTH_LONG).show()
-                        } else {
+                        } else { // incorrect password
                             Toast.makeText(context, "Incorrect Credentials.", Toast.LENGTH_LONG).show()
                         }
                     }
                 }
             },
             modifier = Modifier.fillMaxWidth(0.5f),
-            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+            colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
         ) {
-            Text("Continue", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Login", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(5.dp))
 
         // Register button
         Button(
+            // navigate to registration page
             onClick = { context.startActivity(Intent(context, RegistrationPage::class.java)) },
             modifier = Modifier.fillMaxWidth(0.5f),
             colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
@@ -229,13 +231,20 @@ fun LoginScreen(
     }
 }
 
-
+/**
+ * Navigate to the appropriate page based on the user's form completion status (first visitor).
+ *
+ * @param context Context to access shared preference.
+ * @param userId User ID to be saved.
+ */
 fun navigateDecision(context: Context, userId: String) {
     val sharedPref = context.getSharedPreferences("${userId}Response", Context.MODE_PRIVATE)
     val completedResponse = sharedPref.getBoolean("completedResponse", false)
     if (completedResponse) {
+        // navigate to home page (completed)
         context.startActivity(Intent(context, HomePage::class.java))
     } else {
+        // navigate to questionnaire page (not completed)
         context.startActivity(Intent(context, QuestionnairePage::class.java))
     }
 }

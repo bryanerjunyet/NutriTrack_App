@@ -1,15 +1,25 @@
 package com.fit2081.junyet33521026.data
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+/**
+ * FoodIntakeViewModel separates the UI from the data layer to manage food intake data for patients.
+ * @param context Context to access application resources and database.
+ * @return FoodIntakeViewModel instance.
+ */
 class FoodIntakeViewModel(context: Context) : ViewModel() {
+    // Repository for managing food intake data
     private val foodIntakeRepo = FoodIntakeRepository(context)
 
+    /**
+     * Retrieves all food intakes for a specific patient.
+     * @param patientId The ID of the patient.
+     * @return A list of FoodIntake records for the patient.
+     */
     suspend fun saveFoodIntake(
         patientId: String,
         selectedFoods: List<String>,
@@ -18,8 +28,6 @@ class FoodIntakeViewModel(context: Context) : ViewModel() {
         sleepTime: String,
         wakeTime: String
     ) {
-        Log.d("FoodIntakeViewModel", "Saving food intake for patient: $patientId, foods: " +
-                "$selectedFoods, persona: $persona, mealTime: $mealTime, sleepTime: $sleepTime, wakeTime: $wakeTime")
         val foodIntake = FoodIntake(
             patientId = patientId,
             selectedFoods = Json.encodeToString(selectedFoods),
@@ -28,11 +36,14 @@ class FoodIntakeViewModel(context: Context) : ViewModel() {
             sleepTime = sleepTime,
             wakeTime = wakeTime
         )
-        Log.d("FoodIntakeViewModel", "Food intake object: $foodIntake")
         foodIntakeRepo.insertFoodIntake(foodIntake)
-        Log.d("FoodIntakeViewModel", "Food intake saved successfully")
     }
 
+    /**
+     * Retrieves all food intakes for a specific patient.
+     * @param patientId The ID of the patient.
+     * @return A list of FoodIntake records for the patient.
+     */
     suspend fun updateFoodIntake(
         id: Int,
         patientId: String,
@@ -42,8 +53,6 @@ class FoodIntakeViewModel(context: Context) : ViewModel() {
         sleepTime: String,
         wakeTime: String
     ) {
-        Log.d("FoodIntakeViewModel", "Updating food intake for patient: $patientId, foods: " +
-                "$selectedFoods, persona: $persona, mealTime: $mealTime, sleepTime: $sleepTime, wakeTime: $wakeTime")
         val foodIntake = FoodIntake(
             id = id,
             patientId = patientId,
@@ -53,14 +62,22 @@ class FoodIntakeViewModel(context: Context) : ViewModel() {
             sleepTime = sleepTime,
             wakeTime = wakeTime
         )
-        Log.d("FoodIntakeViewModel", "Food intake object: $foodIntake")
         foodIntakeRepo.updateFoodIntake(foodIntake)
-        Log.d("FoodIntakeViewModel", "Food intake updated successfully")
     }
 
+    /**
+     * Retrieves the latest food intake for a specific patient.
+     * @param patientId The ID of the patient.
+     * @return The latest FoodIntake for the patient.
+     */
     suspend fun getLatestFoodIntake(patientId: String): FoodIntake? =
         foodIntakeRepo.getLatestFoodIntake(patientId)
 
+    /**
+     * FoodIntakeViewModel constructor.
+     * @param context Context to access application resources and database.
+     * @return FoodIntakeViewModel instance.
+     */
     class FoodIntakeViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return FoodIntakeViewModel(context.applicationContext) as T

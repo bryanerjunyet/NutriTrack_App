@@ -56,16 +56,14 @@ class ClinicianPage : ComponentActivity() {
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // State to control which screen to display
+                    // login state control
                     val isLoggedIn = remember { mutableStateOf(false) }
 
-                    if (isLoggedIn.value) {
-                        // Show dashboard when logged in
+                    if (isLoggedIn.value) { // admin logged in success
                         ClinicianDashboardScreen(
                             modifier = Modifier.padding(innerPadding)
                         )
-                    } else {
-                        // Show login screen when not logged in
+                    } else { // admin under validation
                         ClinicianLoginScreen(
                             modifier = Modifier.padding(innerPadding),
                             onLoginSuccess = { isLoggedIn.value = true },
@@ -78,20 +76,18 @@ class ClinicianPage : ComponentActivity() {
     }
 }
 
+private val clinicianValidKey = "dollar-entry-apples"
+
 /**
- * Clinician Login Screen for the application.
+ * Composable function for the Clinician Login Screen.
  *
  * @param modifier Modifier to be applied.
  * @param onLoginSuccess Callback for successful login.
  * @param onBackClick Callback for back button click.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClinicianLoginScreen(
-    modifier: Modifier = Modifier,
-    onLoginSuccess: () -> Unit,
-    onBackClick: () -> Unit
-) {
+fun ClinicianLoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit, onBackClick: () -> Unit) {
+    // current context and other state management
     val context = LocalContext.current
     val currentPage = remember { mutableStateOf("Settings") }
     val clinicianKey = remember { mutableStateOf("") }
@@ -120,12 +116,12 @@ fun ClinicianLoginScreen(
         )
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Clinician key input field
+        // Clinician key input
         OutlinedTextField(
             value = clinicianKey.value,
             onValueChange = {
                 clinicianKey.value = it
-                errorMessage.value = "" // Clear error when typing
+                errorMessage.value = ""
             },
             label = { Text("Enter Clinician Key") },
             modifier = Modifier
@@ -137,7 +133,7 @@ fun ClinicianLoginScreen(
             singleLine = true
         )
 
-        // Error message if any
+        // Error message display
         if (errorMessage.value.isNotEmpty()) {
             Text(
                 text = errorMessage.value,
@@ -146,25 +142,21 @@ fun ClinicianLoginScreen(
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
-
         Spacer(modifier = Modifier.height(24.dp))
 
         // Login button
         Button(
             onClick = {
-                if (clinicianKey.value == "dollar-entry-apples") {
-                    // Correct key, switch to dashboard
-                    onLoginSuccess()
-                } else {
-                    // Incorrect key
+                if (clinicianKey.value == clinicianValidKey) {
+                    onLoginSuccess() // successful login
+                } else { // incorrect key
                     errorMessage.value = "Invalid clinician key. Only admin can access this page."
                 }
             },
             modifier = Modifier.fillMaxWidth(0.5f),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Red
-            ),
-            shape = RoundedCornerShape(8.dp)
+            )
         ) {
             Text(
                 text = "Login",
@@ -180,8 +172,7 @@ fun ClinicianLoginScreen(
             modifier = Modifier.fillMaxWidth(0.5f),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.DarkGray
-            ),
-            shape = RoundedCornerShape(8.dp)
+            )
         ) {
             Text(
                 text = "Back",
@@ -192,6 +183,7 @@ fun ClinicianLoginScreen(
 
     }
 
+    // Bottom navigation bar
     Column {
         Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
@@ -199,32 +191,27 @@ fun ClinicianLoginScreen(
 }
 
 /**
- * Clinician Dashboard Screen for the application.
+ * Composable function for the Clinician Dashboard Screen.
  *
  * @param modifier Modifier to be applied.
- * @param onBackClick Callback for back button click.
  */
 @Composable
 fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
+    // current context and current page
     val context = LocalContext.current
     val currentPage = remember { mutableStateOf("Settings") }
 
-    // Get ViewModel instances
-    val patientViewModel: PatientViewModel = viewModel(
-        factory = PatientViewModel.PatientViewModelFactory(context)
-    )
+    // AIViewModel setup for access to AI functionalities
     val AIViewModel: AIViewModel = viewModel(
         factory = AIViewModel.AIViewModelFactory(context)
     )
 
-    // Collect UI state
+    // current clinician attributes state management
     val clinicianUiState by AIViewModel.uiState.collectAsState()
-
-    // Collect average HEIFA scores
     val maleAverageHeifa by AIViewModel.maleAverageHeifa.collectAsState(initial = 0.0f)
     val femaleAverageHeifa by AIViewModel.femaleAverageHeifa.collectAsState(initial = 0.0f)
 
-    // Initialize ViewModel data
+    // launched effect to calculate average scores at first displayed
     LaunchedEffect(key1 = true) {
         AIViewModel.calculateAverageScores()
     }
@@ -233,11 +220,11 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState()), // scrollable content
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Title
+        // Clinician dashboard title
         Text(
             text = "Clinician Dashboard",
             textAlign = TextAlign.Center,
@@ -248,24 +235,23 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
                 .padding(bottom = 16.dp)
         )
 
-        // HEIFA Average Score boxes
+        // Male HEIFA average scores
         HeifaScoreBox(
             title = "Average HEIFA (Male)",
             score = String.format("%.1f", maleAverageHeifa)
         )
-
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Female HEIFA average scores
         HeifaScoreBox(
             title = "Average HEIFA (Female)",
             score = String.format("%.1f", femaleAverageHeifa)
         )
-
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Find Data Pattern Button
+        // Find data pattern Button
         Button(
-            onClick = { AIViewModel.analyzeData() },
+            onClick = { AIViewModel.analyseData() },
             modifier = Modifier
                 .fillMaxWidth(0.6f)
                 .height(48.dp),
@@ -293,59 +279,35 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
                 )
             }
         }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // AI Analysis Results
-        when (clinicianUiState) {
-            is UIState.Initial -> {
-                // Nothing to show yet
+        // AI insights result
+        if (clinicianUiState is UIState.ClinicianLoading) { // visual feedback of circular loading indicator
+            CircularProgressIndicator(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .align(Alignment.CenterHorizontally),
+                color = Color.Red
+            )
+        } // display all AI insights
+        else if (clinicianUiState is UIState.ClinicianSuccess) {
+            val insights = (clinicianUiState as UIState.ClinicianSuccess).insights
+            insights.forEach { insight ->
+                InsightCard(title = insight.title, description = insight.description)
+                Spacer(modifier = Modifier.height(8.dp))
             }
-
-            is UIState.ClinicianLoading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .align(Alignment.CenterHorizontally),
-                    color = Color.Red
-                )
-            }
-
-            is UIState.ClinicianSuccess -> {
-                val insights = (clinicianUiState as UIState.ClinicianSuccess).insights
-                insights.forEach { insight ->
-                    InsightCard(title = insight.title, description = insight.description)
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-
-            is UIState.Error -> {
-                Text(
-                    text = "Error: ${(clinicianUiState as UIState.Error).errorMessage}",
-                    color = Color.Red,
-                    modifier = Modifier.padding(16.dp)
-                )
-            }
-
-            is UIState.NutriCoachSuccess -> {
-                // Nothing to show
-            }
-
-            is UIState.AIChatSuccess -> {
-
-            }
-
-            UIState.AIChatLoading -> {
-
-            }
-            UIState.NutriCoachLoading -> {
-
-            }
+        } // display error message
+        else if (clinicianUiState is UIState.Error) {
+            Text(
+                text = "Error: ${(clinicianUiState as UIState.Error).errorMessage}",
+                color = Color.Red,
+                modifier = Modifier.padding(16.dp)
+            )
         }
-
         Spacer(modifier = Modifier.height(100.dp))
     }
 
+    // Bottom navigation bar
     Column {
         Spacer(modifier = Modifier.weight(1f))
         BottomNavigationBar(context, currentPage)
@@ -355,10 +317,13 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun HeifaScoreBox(
-    title: String,
-    score: String
-) {
+/**
+ * Composable function for HEIFA score box.
+ *
+ * @param title Title of HEIFA score box.
+ * @param score Score to be displayed.
+ */
+fun HeifaScoreBox(title: String, score: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -390,10 +355,13 @@ fun HeifaScoreBox(
 }
 
 @Composable
-fun InsightCard(
-    title: String,
-    description: String
-) {
+/**
+ * Composable function for displaying AI insights in a card format.
+ *
+ * @param title Title of the insight.
+ * @param description Description of the insight.
+ */
+fun InsightCard(title: String, description: String) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
