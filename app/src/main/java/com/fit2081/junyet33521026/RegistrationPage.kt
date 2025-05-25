@@ -140,7 +140,9 @@ fun RegistrationScreen(modifier: Modifier = Modifier, viewModel: PatientViewMode
                 label = { Text("Select User ID") },
                 readOnly = true, // only can select from dropdown menu
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(userOptionsID) },
-                modifier = Modifier.fillMaxWidth().menuAnchor() // show dropdown menu onto text field
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor() // show dropdown menu onto text field
             )
             androidx.compose.material3.DropdownMenu(
                 expanded = userOptionsID,  // show dropdown menu
@@ -264,11 +266,17 @@ fun RegistrationScreen(modifier: Modifier = Modifier, viewModel: PatientViewMode
                     }
 
                     // register patient
-                    val success = viewModel.registerPatient(userInputID, phoneNumber, name, password)
-                    if (success) {
-                        Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT).show()
+                    val isRegistered = viewModel.isRegisteredPatient(userInputID)
+                    if (!isRegistered) {
+                        val success = viewModel.registerPatient(userInputID, phoneNumber, name, password)
+                        if (success) {
+                            Toast.makeText(context, "Registration successful", Toast.LENGTH_SHORT)
+                                .show()
+                        } else {
+                            errorMessage = "Registration failed. Please check your input."
+                        }
                     } else {
-                        errorMessage = "Registration failed. Please check your input."
+                        errorMessage = "User ID is already registered"
                     }
                 }
             },

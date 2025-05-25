@@ -41,7 +41,18 @@ sealed interface UIState {
     data class AIChatSuccess(val message: String) : UIState
 
     /**
-     * There was an error during generation or analysis
+     * There was an error during generation or analysis for Clinician Insights
      */
-    data class Error(val errorMessage: String) : UIState
+    data class ClinicianError(val errorMessage: String) : UIState
+
+    /**
+     * There was an error during generation for NutriCoach moticational message
+     */
+    data class NutriCoachError(val errorMessage: String) : UIState
+
+    /**
+     * There was an error during chat for NutriAI
+     */
+    data class AIChatError(val errorMessage: String) : UIState
+
 }

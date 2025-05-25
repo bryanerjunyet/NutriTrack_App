@@ -56,6 +56,18 @@ class PatientRepository(context: Context) {
     ///////// Advance Operation for Score Statistics /////////
 
     /**
+     * Calculate average food score of all male patients in the database.
+     * @return Average male patient food score.
+     */
+    suspend fun getAverageHeifaScoreMale(): Float = patientDao.getAverageHeifaScoreMale()
+
+    /**
+     * Calculate average food score of all female patients in the database.
+     * @return Average female patient food score.
+     */
+    suspend fun getAverageHeifaScoreFemale(): Float = patientDao.getAverageHeifaScoreFemale()
+
+    /**
      * Retrieves all scores from the database.
      * @return A list of all scores.
      */

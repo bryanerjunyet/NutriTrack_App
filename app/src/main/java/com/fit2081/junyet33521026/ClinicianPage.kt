@@ -17,7 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import kotlinx.coroutines.launch
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,6 +53,10 @@ class ClinicianPage : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        // PatientViewModel setup to manage patient data
+        val patientViewModel = PatientViewModel(this)
+
+
         setContent {
             JunYet33521026Theme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -61,7 +65,8 @@ class ClinicianPage : ComponentActivity() {
 
                     if (isLoggedIn.value) { // admin logged in success
                         ClinicianDashboardScreen(
-                            modifier = Modifier.padding(innerPadding)
+                            modifier = Modifier.padding(innerPadding),
+                            patientViewModel = patientViewModel
                         )
                     } else { // admin under validation
                         ClinicianLoginScreen(
@@ -196,24 +201,34 @@ fun ClinicianLoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Un
  * @param modifier Modifier to be applied.
  */
 @Composable
-fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
-    // current context and current page
+fun ClinicianDashboardScreen(modifier: Modifier = Modifier, patientViewModel: PatientViewModel) {
+    // current context, page and coroutine scope management
     val context = LocalContext.current
     val currentPage = remember { mutableStateOf("Settings") }
+    val coroutineScope = rememberCoroutineScope()
 
     // AIViewModel setup for access to AI functionalities
     val AIViewModel: AIViewModel = viewModel(
         factory = AIViewModel.AIViewModelFactory(context)
     )
 
-    // current clinician attributes state management
+    // current average scores state
+    val maleAverageHeifa = remember { mutableStateOf(0.0f) }
+    val femaleAverageHeifa = remember { mutableStateOf(0.0f) }
     val clinicianUiState by AIViewModel.uiState.collectAsState()
-    val maleAverageHeifa by AIViewModel.maleAverageHeifa.collectAsState(initial = 0.0f)
-    val femaleAverageHeifa by AIViewModel.femaleAverageHeifa.collectAsState(initial = 0.0f)
 
-    // launched effect to calculate average scores at first displayed
+    // launched effect to calculate average scores using PatientViewModel
     LaunchedEffect(key1 = true) {
-        AIViewModel.calculateAverageScores()
+        coroutineScope.launch {
+            try {
+                maleAverageHeifa.value = patientViewModel.getAverageHeifaScoreMale()
+                femaleAverageHeifa.value = patientViewModel.getAverageHeifaScoreFemale()
+            } catch (e: Exception) {
+                // Handle potential exceptions
+                maleAverageHeifa.value = 0.0f
+                femaleAverageHeifa.value = 0.0f
+            }
+        }
     }
 
     Column(
@@ -238,14 +253,14 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
         // Male HEIFA average scores
         HeifaScoreBox(
             title = "Average HEIFA (Male)",
-            score = String.format("%.1f", maleAverageHeifa)
+            score = String.format("%.1f", maleAverageHeifa.value)
         )
         Spacer(modifier = Modifier.height(8.dp))
 
         // Female HEIFA average scores
         HeifaScoreBox(
             title = "Average HEIFA (Female)",
-            score = String.format("%.1f", femaleAverageHeifa)
+            score = String.format("%.1f", femaleAverageHeifa.value)
         )
         Spacer(modifier = Modifier.height(24.dp))
 
@@ -297,9 +312,9 @@ fun ClinicianDashboardScreen(modifier: Modifier = Modifier) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
         } // display error message
-        else if (clinicianUiState is UIState.Error) {
+        else if (clinicianUiState is UIState.ClinicianError) {
             Text(
-                text = "Error: ${(clinicianUiState as UIState.Error).errorMessage}",
+                text = "Error: ${(clinicianUiState as UIState.ClinicianError).errorMessage}",
                 color = Color.Red,
                 modifier = Modifier.padding(16.dp)
             )

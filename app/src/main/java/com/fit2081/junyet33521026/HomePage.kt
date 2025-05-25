@@ -210,7 +210,7 @@ fun HomePageScreen(modifier: Modifier = Modifier, viewModel: PatientViewModel) {
                     "and opportunities for improvement in your diet. \nThis personalised " +
                     "measurement considers various food groups including vegetables, fruits, " +
                     "whole grains, and proteins to give you practical insights for making " +
-                    "healthier food choics.",
+                    "healthier food choices.",
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 8.dp)
         )

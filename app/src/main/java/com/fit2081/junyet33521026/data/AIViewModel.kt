@@ -36,39 +36,6 @@ class AIViewModel(context: Context) : ViewModel() {
         MutableStateFlow(UIState.Initial)
     val uiState: StateFlow<UIState> = _uiState.asStateFlow()
 
-    // other state management
-    private val _maleAverageHeifa = MutableStateFlow(0.0f)
-    private val _femaleAverageHeifa = MutableStateFlow(0.0f)
-    val maleAverageHeifa: StateFlow<Float> = _maleAverageHeifa
-    val femaleAverageHeifa: StateFlow<Float> = _femaleAverageHeifa
-
-    /**
-     * Calculate average HEIFA scores for males and females
-     */
-    fun calculateAverageScores() {
-        viewModelScope.launch {
-            try {
-                patientRepository.getAllPatients().collect { patients ->
-                    val malePatients = patients.filter { it.sex.equals("Male", ignoreCase = true) }
-                    val femalePatients = patients.filter { it.sex.equals("Female", ignoreCase = true) }
-
-                    val maleAvg = if (malePatients.isNotEmpty()) {
-                        malePatients.map { it.heifaTotalScore }.average().toFloat()
-                    } else 0.0f
-
-                    val femaleAvg = if (femalePatients.isNotEmpty()) {
-                        femalePatients.map { it.heifaTotalScore }.average().toFloat()
-                    } else 0.0f
-
-                    _maleAverageHeifa.value = maleAvg
-                    _femaleAverageHeifa.value = femaleAvg
-                }
-            } catch (e: Exception) {
-                _uiState.value = UIState.Error("Error calculating averages: ${e.message}")
-            }
-        }
-    }
-
     /**
      * Analyse patient data using Gemini AI
      */
@@ -97,7 +64,7 @@ class AIViewModel(context: Context) : ViewModel() {
                 _uiState.value = UIState.ClinicianSuccess(insights)
 
             } catch (e: Exception) {
-                _uiState.value = UIState.Error("Error analyzing data: ${e.message}")
+                _uiState.value = UIState.ClinicianError("Error analyzing data: ${e.message}")
             }
         }
     }
@@ -282,7 +249,7 @@ class AIViewModel(context: Context) : ViewModel() {
                 _uiState.value = UIState.NutriCoachSuccess(message)
 
             } catch (e: Exception) {
-                _uiState.value = UIState.Error("Error generating message: ${e.message}")
+                _uiState.value = UIState.NutriCoachError("Error generating message: ${e.message}")
             }
         }
     }
@@ -318,7 +285,7 @@ class AIViewModel(context: Context) : ViewModel() {
                 _uiState.value = UIState.AIChatSuccess(message)
 
             } catch (e: Exception) {
-                _uiState.value = UIState.Error("Error generating response: ${e.message}")
+                _uiState.value = UIState.AIChatError("Error generating response: ${e.message}")
             }
         }
     }

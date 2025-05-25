@@ -396,7 +396,7 @@ fun NutriCoachPageScreen(modifier: Modifier = Modifier, patientViewModel: Patien
                     }
                 }
             } // error message
-            else if (uiState is UIState.Error) {
+            else if (uiState is UIState.NutriCoachError) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
@@ -404,7 +404,7 @@ fun NutriCoachPageScreen(modifier: Modifier = Modifier, patientViewModel: Patien
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Text(
-                        text = "Error: ${(uiState as UIState.Error).errorMessage}",
+                        text = "Error: ${(uiState as UIState.NutriCoachError).errorMessage}",
                         color = Color.Red,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(16.dp)
@@ -608,7 +608,7 @@ fun NutriCoachPageScreen(modifier: Modifier = Modifier, patientViewModel: Patien
                     }
                 }
             }  // error message
-            else if (uiState is UIState.Error) {
+            else if (uiState is UIState.AIChatError) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(8.dp),
@@ -616,7 +616,7 @@ fun NutriCoachPageScreen(modifier: Modifier = Modifier, patientViewModel: Patien
                     elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Text(
-                        text = "Error: ${(uiState as UIState.Error).errorMessage}",
+                        text = "Error: ${(uiState as UIState.AIChatError).errorMessage}",
                         color = Color.Red,
                         fontSize = 14.sp,
                         modifier = Modifier.padding(16.dp)

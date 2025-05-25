@@ -35,6 +35,18 @@ class PatientViewModel(context: Context) : ViewModel() {
     //////////// Score Stats Operations /////////
 
     /**
+     * Calculate average food score of all male patients.
+     * @return Average male patient food score.
+     */
+    suspend fun getAverageHeifaScoreMale(): Float = patientRepo.getAverageHeifaScoreMale()
+
+    /**
+     * Calculate average food score of all female patients.
+     * @return Average female patient food score.
+     */
+    suspend fun getAverageHeifaScoreFemale(): Float = patientRepo.getAverageHeifaScoreFemale()
+
+    /**
      * Retrieves all scores from the repository.
      * @return A list of all scores.
      */
@@ -114,6 +126,16 @@ class PatientViewModel(context: Context) : ViewModel() {
     }
 
     /**
+     * Checks if a patient is registered by verifying if their name and password are not empty.
+     * @param userId The ID of the patient to be checked.
+     * @return True or not the patient is registered.
+     */
+    suspend fun isRegisteredPatient(userId: String): Boolean {
+        val patient =(patientRepo.getPatient(userId))
+        return ((patient.name?.isNotEmpty() == true) && (patient.password?.isNotEmpty()) == true)
+    }
+
+    /**
      * Registers a new patient by updating their information in the database.
      * @param userId The ID of the patient to be registered.
      * @param phoneNumber The phone number of the patient.
@@ -124,7 +146,6 @@ class PatientViewModel(context: Context) : ViewModel() {
     suspend fun registerPatient(userId: String, phoneNumber: String, name: String, password: String): Boolean {
         val patient =(patientRepo.getPatient(userId))
         if (patient.phoneNumber != phoneNumber) return false
-
         patient.name = name
         patient.password = SHAEncrypter.hashPasswordSHA(password)
         this.updatePatient(patient)
